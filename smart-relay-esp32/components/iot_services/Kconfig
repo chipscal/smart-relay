@@ -1,0 +1,31 @@
+menu "IoT Service"
+    choice
+        prompt "Board type definition"
+        default SMART_RELAY_WIFI_R1
+    
+        config SMART_RELAY_WIFI_R1
+            tristate "Smart Relay WiFi R1"
+            help 
+                Select this option if you have a Smart Relay WiFi R1
+        
+        config DEVELOPMENT_BOARD
+            tristate "Dev"
+            help 
+                Select this option if you have a development board (e.g. WROVER-KIT-V4)
+        
+    endchoice
+
+    config IOT_BOARD_HREV
+        int "Board hardware revision"
+        default 1
+        help 
+            Board revision is used to select proper board pinout
+
+
+    config IOT_IO_STORAGE_NAMESPACE
+        string "Storage namespace used from IoT services"
+        default "iot_services"
+        help 
+            Namespace is used to avoid collisions among different services that use storage
+            
+endmenu
