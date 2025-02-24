@@ -25,6 +25,7 @@
 #define ADC_VREF_DEFAULT        1100U
 #define ADC_N_SAMPLE_DEFAULT    100
 #define ADC_MIN_MEASURE_IGNORE  0
+#define ADC_C_SENSE_RESISTOR    0
 
 
 // ------------------------------- Define board I/O here:

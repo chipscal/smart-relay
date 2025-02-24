@@ -265,7 +265,7 @@ adc_cali_handle_t handle = NULL;
         }
     #endif
 
-*out_handle = handle;
+    *out_handle = handle;
     if (ret == ESP_OK) {
         ESP_LOGI(TAG, "Calibration Success");
     } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
