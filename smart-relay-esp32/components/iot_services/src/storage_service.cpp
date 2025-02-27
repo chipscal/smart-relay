@@ -10,7 +10,7 @@
 
 static const char *TAG = "iot_services::storage_service";
 
-namespace clab::iot_services{
+namespace clab::iot_services {
 
     esp_err_t storage_init() {
 

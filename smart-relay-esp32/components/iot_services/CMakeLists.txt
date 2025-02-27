@@ -1,5 +1,5 @@
 idf_component_register(
         SRC_DIRS "src"
         INCLUDE_DIRS "include"
-        REQUIRES "driver" "freertos" "esp_rom" "esp_timer" "esp_adc" "nvs_flash"  "mbedtls")
+        REQUIRES "driver" "freertos" "esp_rom" "esp_timer" "esp_adc" "nvs_flash"  "mbedtls" "esp_wifi" "esp_event")
 
