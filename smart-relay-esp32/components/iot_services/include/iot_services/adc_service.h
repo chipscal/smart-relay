@@ -42,7 +42,7 @@ esp_err_t adc_service_calibration_deinit(adc_cali_handle_t handle);
 /// @param n_samples number of consecutive samples (>= 1) taken to compute average measure,
 /// @return average uncalibrated analog measure of the corresponding gpio.
 /// @note the returned value will be an integer according to the bit resolution used (defined with ADC_BIT_RESOLUTION)
-/// considering the default ADC_ATTEN_DB_11 attenuation.
+/// considering the default ADC_ATTEN_DB_12 attenuation.
 int adc_service_measure_raw(gpio_num_t gpio, int n_samples);
 
 /// @brief Analog voltage measure of the corresponding gpio.

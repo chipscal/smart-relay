@@ -153,8 +153,8 @@ namespace clab::iot_services {
     size_t sprint_uint32_binary(char *buffer, T value) {
         uint32_t mask = value;
         size_t cnt = 0;                                                                                      
-        if (!irreo::iot_services::is_little_endian())                                                               
-            mask = irreo::iot_services::swap_uint32(mask);            
+        if (!clab::iot_services::is_little_endian())                                                               
+            mask = clab::iot_services::swap_uint32(mask);            
 
         for (int k = 0; k < sizeof(T); k++) {                                                                
             cnt += sprintf(buffer + cnt, BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(*(((uint8_t *)&(mask)) + sizeof(T) - k - 1)));

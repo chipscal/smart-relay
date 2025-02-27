@@ -12,6 +12,10 @@
     #include "iot_services/adc_service.h"
 #endif
 
+#if defined(IOT_BOARD_USES_I2C_TEMPERATURE)
+    #include "iot_services/i2c_bus_service.h"
+#endif
+
 
 #include <atomic>
 #include <array>
@@ -33,6 +37,25 @@
 static const char *TAG = "iot_services::io_service";
 
 #define ESP_INTR_FLAG_DEFAULT 0
+
+#if defined(IOT_BOARD_TEMPERATURE_USES_LM75D)
+    #define __LM75D_TEMP_REGISTER     0b00000000
+    #define __LM75D_CONF_REGISTER     0b00000001
+    #define __LM75D_HYST_REGISTER     0b00000010
+    #define __LM75D_OVER_REGISTER     0b00000011
+
+    #define __LM75D_DEFAULT_TIMEOUT         1000U
+    #define __LM75D_WAIT_MEASURE_MILLIS     50U
+
+    #define __LM75D_NORMAL_BEHAVIOUR  0b00000000
+    #define __LM75D_SHUTDOWN          0b00000001
+
+    #define __LM75D_VALUES_MSB_CONVERSION_MASK           0b11111111
+    #define __LM75D_VALUES_LSB_CONVERSION_MASK           0b11100000
+    #define __LM75D_VALUES_SCALE_FACTOR                  0.125f;
+
+
+#endif
 
 
 namespace clab::iot_services {   
@@ -116,7 +139,7 @@ namespace clab::iot_services {
     #endif
 
     #if defined(IOT_BOARD_USES_I2C_ADC) && defined(IOT_BOARD_DIGITAL_I2C_ADDR_MACRO)
-        std::array<adc_i2c_input_t, IOT_BOARD_N_DIGITAL>       digital_in           = digital_i2c_array_create<IOT_BOARD_N_DIGITAL>(
+        std::array<digital_i2c_input_t, IOT_BOARD_N_DIGITAL>       digital_in           = digital_i2c_array_create<IOT_BOARD_N_DIGITAL>(
                 IOT_BOARD_DIGITAL_I2C_ADDR_MACRO, IOT_BOARD_DIGITAL_I2C_ADDR_MACRO, IOT_BOARD_DIGITAL_I2C_ATTEN_MACRO);
     #elif defined(IOT_BOARD_DIGITAL_MACRO)
         std::array<uint8_t, IOT_BOARD_N_DIGITAL>               digital_in           = IOT_BOARD_DIGITAL_MACRO;  
@@ -124,10 +147,15 @@ namespace clab::iot_services {
         dummy_array<uint8_t>                            digital_in;
     #endif
 
-    #ifdef EDGE_METEO
-        sht1x::SHT1x           sht1x_driver(static_cast<gpio_num_t>(TH_DATA), 
-                static_cast<gpio_num_t>(TH_CLK), sht1x::SHT1x::Voltage::DC_3_3v);
+    #if defined(IOT_BOARD_USES_I2C_TEMPERATURE) && defined(IOT_BOARD_TEMPERATURE_I2C_ADDR_MACRO)
+        std::array<uint8_t, IOT_BOARD_N_TEMPERATURE>       temp_in              = IOT_BOARD_TEMPERATURE_I2C_ADDR_MACRO;
+    #elif defined(IOT_BOARD_TEMPERATURE_MACRO)
+        std::array<uint8_t, IOT_BOARD_N_TEMPERATURE>       temp_in              = IOT_BOARD_TEMPERATURE_MACRO;  
+    #else
+        dummy_array<uint8_t>                            temp_in;
     #endif
+
+    
 
     uint16_t        esp32_io_pulse_get(uint8_t pulse);
     esp_err_t       esp32_io_pulse_save(uint8_t pulse, uint16_t value);
@@ -141,6 +169,7 @@ namespace clab::iot_services {
     bool            esp32_io_digital_get(uint8_t input);
     float           esp32_io_analog_current_get(uint8_t input, float resistor);
     float           esp32_io_analog_voltage_get(uint8_t input, float scale);
+    float           esp32_io_temperature_get(uint8_t input);
 
     esp_err_t io_init() {
         ESP_LOGI(TAG, "Starting up I/O interfaces...");
@@ -256,7 +285,7 @@ namespace clab::iot_services {
 
         #ifdef IOT_BOARD_USES_INTERNAL_ADC
             for (int k = 0; k < a_current_in.size(); k++) {
-                result = adc_service_calibration_init(static_cast<gpio_num_t>(a_current_in[k]), ADC_ATTEN_DB_11, 
+                result = adc_service_calibration_init(static_cast<gpio_num_t>(a_current_in[k]), ADC_ATTEN_DB_12, 
                         &(a_current_calib[k]));
                 if (result != ESP_OK) {
                     ESP_LOGE(TAG, "C[%d] Error during calibration: %d", k, result);
@@ -276,12 +305,13 @@ namespace clab::iot_services {
             ESP_LOGI(TAG, "Analog inputs calibrated...");
         #endif
 
-        #ifdef EDGE_METEO
-            if (sht1x_driver.init() < 0) {
-                ESP_LOGE(TAG, "Error during sht1x driver initialization!");
-                return ESP_FAIL;
+        #ifdef IOT_BOARD_TEMPERATURE_USES_LM75D
+            result = i2c_bus_register_write_byte(TEMPERATURE_ADDR, __LM75D_CONF_REGISTER, 
+                        __LM75D_NORMAL_BEHAVIOUR | __LM75D_SHUTDOWN, __LM75D_DEFAULT_TIMEOUT);
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Error during temperature sensor configuration!");
+                return result;
             }
-            ESP_LOGI(TAG, "SHT1x driver up...");
         #endif
 
         return ESP_OK;
@@ -308,15 +338,6 @@ namespace clab::iot_services {
             }
 
             ESP_LOGI(TAG, "Analog inputs calibration destroyed...");
-        #endif
-
-        #if EDGE_EXT_N_INSTALLED
-            result = ext_deinit();
-            if (result != ESP_OK) {
-                ESP_LOGE(TAG, "Error during expansion deinit!");
-                return result;
-            }
-            ESP_LOGI(TAG, "Expansion closed...");
         #endif
 
         return ESP_OK;
@@ -371,20 +392,6 @@ namespace clab::iot_services {
                 return result;
             }
         }
-
-        #if EDGE_EXT_N_INSTALLED
-            for (size_t k = 0; k < EDGE_EXT_N_INSTALLED; k++) {
-                result = ext_latch_refresh(k);
-                if (result != ESP_OK) {
-                    ESP_LOGE(TAG, "Ext[%d] error occurred: %d", k, result);
-
-                    power_line_off(PWR_12V);
-                    return result;
-                }
-                // wait for strobe completion
-                vTaskDelay(pdMS_TO_TICKS(EDGE_IO_STROBE_DURATION + 50)); //extra for command transmission and action delay???
-            }
-        #endif
         
         ESP_LOGI(TAG, "Latch output refreshed");
 
@@ -412,18 +419,13 @@ namespace clab::iot_services {
         
         memset(buffer, 0U, buffer_size);
             
-        uint8_t *a_curr_base_addr = buffer + 3 * sizeof(uint32_t);
+        uint8_t *a_curr_base_addr = buffer + 4 * sizeof(uint32_t);
         
         uint8_t *a_volt_base_addr = a_curr_base_addr + a_current_in.size()  * sizeof(uint16_t);
         
         uint8_t *pulse_base_addr = a_volt_base_addr + a_volt_in.size() * sizeof(uint16_t);
 
-        uint8_t *temperature_base_addr = pulse_base_addr + temperature_in.size() * sizeof(uint16_t);
-
-        #ifdef EDGE_METEO
-            uint8_t *th_base_addr = pulse_base_addr + 
-                (pulse_in.size() + EDGE_EXT_N_INSTALLED * EDGE_EXT_N_PULSE) * sizeof(uint16_t);
-        #endif
+        uint8_t *temperature_base_addr = pulse_base_addr + pulse_in.size() * sizeof(uint16_t);
 
 
         static_assert(EDGE_SREV < 16);
@@ -492,7 +494,7 @@ namespace clab::iot_services {
             auto value = (uint16_t)(
                     std::floor(std::max(0.0f, esp32_io_analog_voltage_get(k, a_volt_scales[k])))); //mV
             
-            ESP_LOGD(TAG, "V[%d]: %d mV", k, value);
+            ESP_LOGI(TAG, "V[%d]: %d mV", k, value);
 
             
             if (!clab::iot_services::is_little_endian())
@@ -520,6 +522,19 @@ namespace clab::iot_services {
 
         xSemaphoreGive(io_mutex);
 
+        for (int k = 0; k < io_n_temperature; k++) {
+
+            auto value = (uint16_t)(
+                    std::floor(std::max(0.0f, esp32_io_temperature_get(k) * 100.0f))); //100 * K
+        
+            ESP_LOGD(TAG, "T[%d]: %f K", k, value / 100.0f);
+
+            
+            if (!clab::iot_services::is_little_endian())
+                value = clab::iot_services::swap_uint16(value);
+
+            memcpy(temperature_base_addr + k * sizeof(uint16_t), &value, sizeof(uint16_t));
+        }
         
         return ESP_OK;
     }
@@ -842,7 +857,7 @@ namespace clab::iot_services {
 
     float esp32_io_analog_current_get(uint8_t input, float resistor) {
         if (input > a_current_in.size()) {
-            ESP_LOGE(TAG, "Input[%d] outside of bounds, ignoring...", input);
+            ESP_LOGE(TAG, "C[%d] outside of bounds, ignoring...", input);
             return NAN;
         }
         
@@ -850,7 +865,7 @@ namespace clab::iot_services {
             float v_read = 0;
             esp_err_t result = adc_i2c_service_measure_voltage(a_current_in[input], ADC_N_SAMPLE_DEFAULT, v_read);
             if (result != ESP_OK) {
-                ESP_LOGE(TAG, "Input[%d]: error occurred during measurement!", input);
+                ESP_LOGE(TAG, "C[%d]: error occurred during measurement!", input);
                 return NAN;
             }
 
@@ -871,7 +886,7 @@ namespace clab::iot_services {
 
     float esp32_io_analog_voltage_get(uint8_t input, float scale) {
         if (input > a_volt_in.size()) {
-            ESP_LOGE(TAG, "Input[%d] outside of bounds, ignoring...", input);
+            ESP_LOGE(TAG, "V[%d] outside of bounds, ignoring...", input);
             return NAN;
         }
 
@@ -879,7 +894,7 @@ namespace clab::iot_services {
             float v_read = 0;
             esp_err_t result = adc_i2c_service_measure_voltage(a_volt_in[input], ADC_N_SAMPLE_DEFAULT, v_read);
             if (result != ESP_OK) {
-                ESP_LOGE(TAG, "Input[%d]: error occurred during measurement!", input);
+                ESP_LOGE(TAG, "V[%d]: error occurred during measurement!", input);
                 return NAN;
             }
 
@@ -899,4 +914,56 @@ namespace clab::iot_services {
 
         // v_read = max(0, min(v_read, 5.0)); //max voltage = 20mA * 220Omh
     }
+
+    #ifdef IOT_BOARD_TEMPERATURE_USES_LM75D
+        int16_t lm75d_i2c_read_value(uint8_t msb, uint8_t lsb) {
+            int16_t to_ret = (msb << 8 ) | 
+                    (lsb & __LM75D_VALUES_LSB_CONVERSION_MASK);
+            return to_ret >> 5;
+        }
+    #endif
+
+    float esp32_io_temperature_get(uint8_t input) {
+        if (input > temp_in.size()) {
+            ESP_LOGE(TAG, "T[%d] outside of bounds, ignoring...", input);
+            return NAN;
+        }
+        
+        #if defined(IOT_BOARD_USES_I2C_TEMPERATURE) && defined(IOT_BOARD_TEMPERATURE_I2C_ADDR_MACRO)
+            #ifdef IOT_BOARD_TEMPERATURE_USES_LM75D
+                esp_err_t result;
+                result = i2c_bus_register_write_byte(temp_in[input], __LM75D_CONF_REGISTER, 
+                        __LM75D_NORMAL_BEHAVIOUR, __LM75D_DEFAULT_TIMEOUT);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Error during temperature sensor configuration!");
+                    return result;
+                }
+
+                vTaskDelay(pdMS_TO_TICKS(__LM75D_WAIT_MEASURE_MILLIS));
+
+                //todo
+                uint8_t buffer[2];
+                result = i2c_bus_register_read(temp_in[input], 
+                        __LM75D_TEMP_REGISTER, buffer, sizeof(buffer), __LM75D_DEFAULT_TIMEOUT);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Error during temperature reading!");
+                    return result;
+                }
+
+                result = i2c_bus_register_write_byte(temp_in[input], __LM75D_CONF_REGISTER, 
+                    __LM75D_NORMAL_BEHAVIOUR | __LM75D_SHUTDOWN, __LM75D_DEFAULT_TIMEOUT);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Error during temperature sensor configuration!");
+                    return result;
+                }
+
+                float to_ret = lm75d_i2c_read_value(buffer[0], buffer[1]) * __LM75D_VALUES_SCALE_FACTOR;
+                return to_ret + 273.15f;
+            #endif
+        #else
+            return NAN;
+        #endif
+
+    }
+
 }

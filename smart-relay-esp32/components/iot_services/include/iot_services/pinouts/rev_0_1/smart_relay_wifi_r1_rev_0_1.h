@@ -18,6 +18,7 @@
 
 // ------------------------------ Put useful values here:
 #define ADC_V_SCALE_VOLTAGE     ((10000.0f + 10000.0f ) / 10000.0f) //Ohm
+#define TEMPERATURE_ADDR        0b1001111
 
 // ------------------------------ Define ADC implementation here:
 #define IOT_BOARD_USES_INTERNAL_ADC
@@ -51,4 +52,6 @@
 #define IOT_BOARD_VOLTAGE_MACRO                  { AIN1 }
 #define IOT_BOARD_VOLTAGE_SCALES_MACRO           { ADC_V_SCALE_VOLTAGE }
 #define IOT_BOARD_VOLTAGE_ATTEN_MACRO            { 3 } //see adc_atten_t
-#define IOT_BOARD_N_TEMPERATURE_USES_LM75D                  
+#define IOT_BOARD_USES_I2C_TEMPERATURE
+#define IOT_BOARD_TEMPERATURE_USES_LM75D                  
+#define IOT_BOARD_TEMPERATURE_I2C_ADDR_MACRO     { TEMPERATURE_ADDR }

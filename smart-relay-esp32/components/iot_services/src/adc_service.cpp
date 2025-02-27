@@ -208,6 +208,7 @@ int adc_service_measure_voltage(gpio_num_t gpio, adc_cali_handle_t handle, int n
     int to_ret;
     esp_err_t result;
     auto measure = adc_service_measure_raw(gpio, n_samples);
+    ESP_LOGI(TAG, "Gpio<%d> reading raw: %d", gpio, measure);
 
     if (measure < 0) {
         ESP_LOGE(TAG, "Gpio<%d> Invalid raw measure!", gpio);
