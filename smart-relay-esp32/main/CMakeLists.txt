@@ -1,3 +1,3 @@
-idf_component_register(SRCS "hello_world_main.c"
-                    INCLUDE_DIRS ""
-                    REQUIRES "iot_services")
+idf_component_register(SRC_DIRS "src" "src/ble"
+                    INCLUDE_DIRS "include"
+                    REQUIRES "nvs_flash" "driver" "freertos" "esp_rom" "esp_timer" "iot_services" "mbedtls" "bt" "app_update")

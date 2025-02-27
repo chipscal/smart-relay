@@ -1,0 +1,52 @@
+menu "Main Service"
+    
+    config EDGE_SOFT_REV
+        int "Software Revision"
+        default 1
+        help 
+            Software revision.
+    
+    config EDGE_SOFT_MINOR
+        int "Software Minor"
+        default 1
+        help 
+            Software minor.
+
+    config MANUFACTURE_NAME
+        string "Manufactured company"
+        default "clab"
+        help 
+            This is the company that manufactured the ble and deployed. 
+    
+    config MODEL_NAME
+        string "Model name of the device"
+        default "clab-smart-relay"
+        help
+            This is the device model name and number corresponding to it.   
+    
+    config STARTUP_LED_TIME_ON_MILLIS
+        int "Startup led on interval (ms)"
+        default 3000
+        help 
+            Time the led is switched on on startup.
+
+    config MAIN_LOOP_INTERVAL_MILLIS
+        int "Main loop task interval (ms)"
+        default 60000
+        help 
+            Main task interval is used to schedule at precise intervall the main loop logic.
+            
+
+    config MAIN_REFRESH_TIME_EVERY_LOOPS
+        int "Amount of main loops after while update the internal rtc time using network."
+        default 10
+        help 
+            The actual time in milliseconds depends from the main loop interval.
+
+    config MAIN_DISABLE_BLE_AFTER_MILLIS
+        int "Number of millisecond after BLE will disable if no device is connected"
+        default 0
+        help 
+            Used to disabled BLE if no one is using it. Should be multiple of MAIN_LOOP_INTERVAL_MILLIS.
+            
+endmenu
