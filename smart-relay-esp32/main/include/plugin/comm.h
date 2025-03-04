@@ -17,6 +17,10 @@ namespace clab::plugins {
     /// @brief Updateds the RTC actual timestamp via the network provider.
     /// @return ESP_OK on success.
     esp_err_t comm_refresh_rtc();
+
+    /// @brief Starts the MQTT broker locally.
+    /// @return ESP_OK on success.
+    esp_err_t comm_mqtt_broker_start();
     
     /// @brief Emit property message.
     /// @param topic of the message

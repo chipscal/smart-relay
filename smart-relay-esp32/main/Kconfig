@@ -48,5 +48,18 @@ menu "Main Service"
         default 0
         help 
             Used to disabled BLE if no one is using it. Should be multiple of MAIN_LOOP_INTERVAL_MILLIS.
+
+    config MAIN_MQTT_BROKER_LISTEN_ON
+        string "Mqtt broker listening address"
+        default "127.0.0.0"
+        help 
+            Used to set listening source addresses to accept.
             
+
+    config MAIN_MQTT_BROKER_LISTEN_PORT
+        int "Mqtt broker listening port"
+        default 1883
+        help 
+            Used to set listening port.
+
 endmenu

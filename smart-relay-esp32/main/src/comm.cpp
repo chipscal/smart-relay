@@ -15,18 +15,25 @@
 #include "iot_services/wifi_service.h"
 #include "iot_services/board.h"
 
-
-
-#ifdef CONFIG_EDGE_LORA_SUPPORTED
-    #include "iot_services/lora_service.h"
-#elif CONFIG_EDGE_GSM_SUPPORTED
-    #include "iot_services/gsm_service.h"
-#endif
+#include "mosq_broker.h"
 
 static const char *TAG = "plugins::comm";
 
 namespace clab::plugins {
 
+    TaskHandle_t comm_mqtt_broker_task_handle = NULL;
+
+    void comm_mqtt_broker_task(void *params) {
+        
+
+        struct mosq_broker_config config = {
+            .host = CONFIG_MAIN_MQTT_BROKER_LISTEN_ON,
+            .port = CONFIG_MAIN_MQTT_BROKER_LISTEN_PORT,
+            .tls_cfg = NULL,
+        };
+
+        mosq_broker_run(&config);
+    }
 
     esp_err_t comm_plugin() {
 
@@ -42,6 +49,19 @@ namespace clab::plugins {
     const char *comm_get_device_uid(){
         return "TEMPORARY1234567";
     }
+
+    esp_err_t comm_mqtt_broker_start() {
+        
+        auto task_result = xTaskCreate(comm_mqtt_broker_task, "mqtt_broker", 4096, NULL, tskIDLE_PRIORITY, &comm_mqtt_broker_task_handle); 
+        if (task_result != pdPASS ) {
+            ESP_LOGE(TAG, "Error occurred during send task creation...");
+            return ESP_FAIL;
+        }
+        ESP_LOGI(TAG, "Power opt task launched...");
+
+        return ESP_OK;
+    }
+
 
     
 

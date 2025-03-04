@@ -85,6 +85,7 @@ extern "C" void app_main(void)
     
     //-------------------------------------- TODO: others plugin goes here:
     ESP_ERROR_CHECK(clab::plugins::comm_plugin());
+    ESP_ERROR_CHECK(clab::plugins::comm_mqtt_broker_start());
     
     // ...
     //--------------------------------------------------------------------
