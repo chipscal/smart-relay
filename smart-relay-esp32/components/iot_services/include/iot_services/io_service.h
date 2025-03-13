@@ -66,6 +66,12 @@ namespace clab::iot_services
     /// @note this function is thread safe.
     esp_err_t   io_relay_cmd(uint8_t relay, bool status);
 
+    /// @brief Check actual Relay status.
+    /// @param relay channel,
+    /// @return actual status.
+    /// @note this function is thread safe.
+    bool        io_relay_status(uint8_t relay);
+
     /// @brief Commands latches status (either onboard and extensions).
     /// @param latch logic channel,
     /// @param status desired,
@@ -73,10 +79,40 @@ namespace clab::iot_services
     /// @note this function is thread safe.
     esp_err_t   io_latch_cmd(uint8_t latch, bool status);
 
+    /// @brief Check actual Latch status.
+    /// @param latch channel,
+    /// @return actual status.
+    /// @note this function is thread safe.
+    bool        io_latch_status(uint8_t latch);
+
     /// @brief Forces latches status refresh.
     /// @return ESP_OK on success
     /// @note this function is thread safe.
     esp_err_t   io_latch_refresh();
+
+    /// @brief Check actual digital input status.
+    /// @param input channel,
+    /// @return actual status.
+    /// @note this function is thread safe.
+    bool        io_digital_input_status(uint8_t input);
+
+    /// @brief Get actual pulse counter
+    /// @param input channel
+    /// @return actual counter.
+    /// @note this function is thread safe.
+    uint16_t    io_pulse_status(uint8_t input);
+
+    /// @brief Measure actual analog voltage input value.
+    /// @param input channel,
+    /// @return actual value in mV.
+    /// @note this function is thread safe.
+    float       io_voltage_input_status(uint8_t input);
+
+    /// @brief Measure actual analog current input value.
+    /// @param input channel,
+    /// @return actual value in mA.
+    /// @note this function is thread safe.
+    float       io_current_input_status(uint8_t input);
 
     /// @brief Generates and stores the report inside an internal buffer and invokes the registered (if so) telem callback passing it.
     /// @param enable_power true if 12V should be switched on (i.e. if not analog measures may be compromised),

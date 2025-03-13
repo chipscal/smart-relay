@@ -20,6 +20,9 @@
 #define __ADC_ATTEN4    4U
 #define __ADC_ATTEN5    5U
 
+#define __NON_INVERTING_DIGITAL_VALUE   0U
+#define __INVERTING_DIGITAL_VALUE       1U
+
 
 
 #if defined(CONFIG_DEVELOPMENT_BOARD)

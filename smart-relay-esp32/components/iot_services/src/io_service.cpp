@@ -143,6 +143,7 @@ namespace clab::iot_services {
                 IOT_BOARD_DIGITAL_I2C_ADDR_MACRO, IOT_BOARD_DIGITAL_I2C_ADDR_MACRO, IOT_BOARD_DIGITAL_I2C_ATTEN_MACRO);
     #elif defined(IOT_BOARD_DIGITAL_MACRO)
         std::array<uint8_t, IOT_BOARD_N_DIGITAL>               digital_in           = IOT_BOARD_DIGITAL_MACRO;  
+        std::array<bool, IOT_BOARD_N_DIGITAL>                  digital_invert       = IOT_BOARD_DIGITAL_INVERTING_MACRO;
     #else
         dummy_array<uint8_t>                            digital_in;
     #endif
@@ -377,9 +378,34 @@ namespace clab::iot_services {
         return esp32_io_relay_cmd(relay, status);
     }
 
+    bool io_relay_status(uint8_t relay) {
+        if (relay > relay_out.size()) {
+            ESP_LOGE(TAG, "Relay[%d] not defined!", relay);
+            return false;
+        }
+        xSemaphoreTake(io_mutex, portMAX_DELAY);
+        bool status = relay_status[relay];
+        xSemaphoreGive(io_mutex);
+
+        return status;
+    }
+
     esp_err_t io_latch_cmd(uint8_t latch, bool status) {
         return esp32_io_latch_cmd(latch, status);
     }
+
+    bool io_latch_status(uint8_t latch) {
+        if (latch > latch_out.size()) {
+            ESP_LOGE(TAG, "Latch[%d] not defined!", latch);
+            return false;
+        }
+        xSemaphoreTake(io_mutex, portMAX_DELAY);
+        bool status = latch_status[latch];
+        xSemaphoreGive(io_mutex);
+
+        return status;
+    }
+
 
     esp_err_t io_latch_refresh() {
         ESP_LOGI(TAG, "Starting latch status refresh...");
@@ -397,6 +423,29 @@ namespace clab::iot_services {
 
         return ESP_OK;
     }
+
+    bool io_digital_input_status(uint8_t input) {
+        return esp32_io_digital_get(input);
+    }
+
+    uint16_t io_pulse_status(uint8_t input) {
+        
+        xSemaphoreTake(io_mutex, portMAX_DELAY);
+        uint16_t value = esp32_io_pulse_get(input);
+        xSemaphoreGive(io_mutex);
+
+        return value;
+    }
+
+    float io_voltage_input_status(uint8_t input) {
+        return esp32_io_analog_voltage_get(input, a_volt_scales[input]); // mV
+    }
+
+    float io_current_input_status(uint8_t input) {
+        return esp32_io_analog_current_get(input, ADC_C_SENSE_RESISTOR); //mA
+    }
+
+
 
     esp_err_t io_telem_report(bool enable_power, bool save_pulses) {
         uint8_t telem_buf[io_buffer_report_size];
@@ -587,7 +636,7 @@ namespace clab::iot_services {
     uint16_t esp32_io_pulse_get(uint8_t pulse) {
         if (pulse > pulse_in.size()) {
             ESP_LOGE(TAG, "P[%d] outside of bounds, ignoring...", pulse);
-            return ESP_ERR_INVALID_ARG;
+            return 0;
         }
         return irq_counts[pulse_in[pulse]];
     }
@@ -852,7 +901,16 @@ namespace clab::iot_services {
     }
 
     bool esp32_io_digital_get(uint8_t input) {
-        return gpio_get_level(static_cast<gpio_num_t>(digital_in[input]));
+        if (input > digital_in.size()) {
+            ESP_LOGE(TAG, "DIN[%d] not defined!", input);
+            return false;
+        }
+
+        auto value = gpio_get_level(static_cast<gpio_num_t>(digital_in[input]));
+        if (digital_invert[input])
+            value = value * -1 + 1;
+
+        return value;
     }
 
     float esp32_io_analog_current_get(uint8_t input, float resistor) {
