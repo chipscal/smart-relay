@@ -6,7 +6,7 @@
 namespace clab::plugins {
 
 
-    typedef bool (*comm_message_callback_t)(const char *topic, const char *payload);
+    typedef void (*comm_message_callback_t)(const char *topic, const char *payload, size_t payload_size);
     
     constexpr int comm_safe_max_packet_size { 1024 };
 
@@ -29,10 +29,16 @@ namespace clab::plugins {
     
     /// @brief Emit property message.
     /// @param topic of the message
-    /// @param payload to send - will be converted to base64 encoding
+    /// @param payload to send
     /// @param payload_size size of the payload
     /// @return ESP_OK on success.
     esp_err_t comm_pub_message(const char *topic, const uint8_t *payload, size_t payload_size);
+
+    /// @brief Subscribe to topic messages
+    /// @param topic to subscribe
+    /// @param callback to execute whenever topic message is received
+    /// @return ESP_OK on success.
+    esp_err_t comm_sub_message(const char *topic, comm_message_callback_t callback);
 
     /// @brief Get the id of the DEVEUID of Modem.
     /// @return String i.e the DEVEUI.

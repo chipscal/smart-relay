@@ -447,10 +447,10 @@ namespace clab::iot_services {
 
 
 
-    esp_err_t io_telem_report(bool enable_power, bool save_pulses) {
+    esp_err_t io_telem_report(bool save_pulses) {
         uint8_t telem_buf[io_buffer_report_size];
 
-        esp_err_t result = io_buffer_report(telem_buf, io_buffer_report_size, enable_power, save_pulses);
+        esp_err_t result = io_buffer_report(telem_buf, io_buffer_report_size, save_pulses);
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "Report generation error: %d", result);
             return result;
@@ -460,7 +460,7 @@ namespace clab::iot_services {
         return ESP_OK;
     }
 
-    esp_err_t io_buffer_report(uint8_t *buffer, int buffer_size, bool enable_power, bool save_pulses) {
+    esp_err_t io_buffer_report(uint8_t *buffer, int buffer_size, bool save_pulses) {
         if (buffer_size < io_buffer_report_size) {
             ESP_LOGE(TAG, "Buffer is too small!");
             return ESP_ERR_INVALID_SIZE;

@@ -9,7 +9,7 @@
 
 #define LOG_TAG_GAP "gap"
 
-#define GAP_DEVICE_NAME_MAX_SIZE 23
+#define GAP_DEVICE_NAME_MAX_SIZE 16
 
 #if __cplusplus
 extern "C" {

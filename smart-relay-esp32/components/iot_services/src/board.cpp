@@ -15,7 +15,7 @@ namespace clab::iot_services {
         ESP_LOGI(TAG, "Restart procedure initialized... Collecting status...");
 
         uint8_t buffer[io_buffer_report_size];
-        esp_err_t result = io_buffer_report(buffer, io_buffer_report_size, false, true);
+        esp_err_t result = io_buffer_report(buffer, io_buffer_report_size, true);
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "Report generation error: %d", result);
         }

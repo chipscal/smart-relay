@@ -1,13 +1,16 @@
 #include "plugin/comm.h"
 
+#include "esp_system.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "mbedtls/base64.h"
+#include "esp_wifi.h"
 
 #include "string.h"
 #include <string>
 #include <array>
+#include <unordered_map>
 
 #include "iot_services/iot_services.h"
 #include "iot_services/rtc_service.h"
@@ -22,9 +25,13 @@ static const char *TAG = "plugins::comm";
 
 namespace clab::plugins {
 
-    TaskHandle_t comm_mqtt_broker_task_handle = NULL;
+    TaskHandle_t                        comm_mqtt_broker_task_handle = NULL;
 
-    esp_mqtt_client_handle_t comm_mqtt_client_handle = NULL;
+    esp_mqtt_client_handle_t            comm_mqtt_client_handle = NULL;
+
+    std::unordered_map<std::string, comm_message_callback_t>  comm_callbacks;
+
+    char                                comm_device_address[16] = "R1XXXXXXXXXXXX";
 
     void comm_mqtt_broker_task(void *params) {
         
@@ -46,11 +53,21 @@ namespace clab::plugins {
             return result;
         }
 
+        uint8_t mac[6];
+        result = esp_wifi_get_mac(wifi_interface_t::WIFI_IF_STA, mac);
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to get wifi mac!");
+            return result;
+        }
+
+        clab::iot_services::sprint_array_hex(comm_device_address + 2, mac, 6);
+
         return ESP_OK;
     }
 
     const char *comm_get_device_uid(){
-        return "TEMPORARY1234567";
+        
+        return comm_device_address;
     }
 
     esp_err_t comm_mqtt_broker_start() {
@@ -84,26 +101,12 @@ namespace clab::plugins {
         switch ((esp_mqtt_event_id_t)event_id) {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
-            ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
             break;
-
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-            msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "data", 0, 0, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             break;
         case MQTT_EVENT_UNSUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
@@ -115,6 +118,10 @@ namespace clab::plugins {
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             ESP_LOGI(TAG, "TOPIC=%.*s", event->topic_len, event->topic);
             ESP_LOGI(TAG, "DATA=%.*s", event->data_len, event->data);
+
+            if (comm_callbacks.contains(event->topic)) {
+                comm_callbacks[event->topic](event->topic, event->data, event->data_len);
+            }
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -173,9 +180,6 @@ namespace clab::plugins {
         return ESP_OK;
     }
 
-
-    
-
     esp_err_t comm_refresh_rtc() {
 
         return ESP_OK;
@@ -183,7 +187,29 @@ namespace clab::plugins {
 
     esp_err_t comm_pub_message(const char *topic, const uint8_t *payload, size_t payload_size) {
 
+        int msg_id = esp_mqtt_client_publish(comm_mqtt_client_handle, topic, (const char *)(payload), payload_size, 0, 0);
+        if (msg_id < 0) {
+            ESP_LOGE(TAG, "Error occurred during publish: %s - %d", topic, msg_id);
+            return ESP_FAIL;
+        }
+
         return ESP_OK;
+    }
+
+    esp_err_t comm_sub_message(const char *topic, comm_message_callback_t callback) {
+        if (!comm_callbacks.contains(topic)) {
+
+            int msg_id = esp_mqtt_client_subscribe(comm_mqtt_client_handle, topic, 0);
+            if (msg_id < 0) {
+                ESP_LOGE(TAG, "Error occurred during subscribe: %s", topic);
+                return ESP_FAIL;
+            }
+
+            comm_callbacks[topic] = callback;
+            return ESP_OK;
+        }
+
+        return ESP_ERR_NOT_ALLOWED;
     }
 
 }

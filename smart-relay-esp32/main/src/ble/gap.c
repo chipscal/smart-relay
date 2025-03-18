@@ -2,7 +2,7 @@
 
 uint8_t gap_addr_type;
 
-char gap_device_name[GAP_DEVICE_NAME_MAX_SIZE] = "irreo-XXXXXXXXXXXXXXXX";
+char gap_device_name[GAP_DEVICE_NAME_MAX_SIZE];
 bool gap_is_connected = false;
 
 int gap_event_handler(struct ble_gap_event *event, void *arg);

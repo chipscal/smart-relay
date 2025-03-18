@@ -19,6 +19,7 @@
 #include "nvs_flash.h"
 #include "ble/gatt_svr.h"
 #include "esp_ota_ops.h"
+#include "mbedtls/base64.h"
 
 
 const char *MAIN_APP_TAG    = "MAIN";
@@ -96,6 +97,10 @@ extern "C" void app_main(void)
     #endif
 
     clab::plugins::comm_mqtt_client_start(is_local_broker);
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    clab::plugins::comm_sub_message("/dev/+/telem", [](auto topic, auto payload, auto payload_size) {
+        ESP_LOGI(MAIN_APP_TAG, "Message: %s", payload);
+    });
     
     // ...
     //--------------------------------------------------------------------
@@ -115,8 +120,8 @@ extern "C" void app_main(void)
     gatt_svr_init();
 
     // set device name and start host task
-    //irreo-xxx
-    strcpy(gap_device_name + 6, clab::plugins::comm_get_device_uid());
+    //clab-xxx
+    strcpy(gap_device_name, clab::plugins::comm_get_device_uid());
     ble_svc_gap_device_name_set(gap_device_name);
 
     nimble_port_freertos_init(gap_host_task);
@@ -126,9 +131,40 @@ extern "C" void app_main(void)
     vTaskDelay(pdMS_TO_TICKS(CONFIG_STARTUP_LED_TIME_ON_MILLIS));
     ESP_ERROR_CHECK(clab::iot_services::io_led_cmd(0, false));
 
+    char topic_buffer[64];
+    sprintf(topic_buffer, "/dev/%s/telem", clab::plugins::comm_get_device_uid());
+    
+    uint8_t telem_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::io_buffer_report_size)];
+    
+    size_t  encoded_size;
+    uint8_t encoded_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::io_buffer_report_size * 2)];
+
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(CONFIG_MAIN_LOOP_INTERVAL_MILLIS));
         
+        // ------------------------- Start Telemetry publish
+        esp_err_t result = clab::iot_services::io_buffer_report(telem_buffer, sizeof(telem_buffer), true);
+        if (result == ESP_OK) {
+            if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                    &encoded_size, telem_buffer, clab::iot_services::io_buffer_report_size) < 0) {
+                ESP_LOGE(MAIN_APP_TAG, "Unable to byte64 encode telemetry, too big!");
+                return;
+            }
+            if (encoded_size == 256) {
+                ESP_LOGE(MAIN_APP_TAG, "Unable to null terminate encoded telemetry, too big!");
+                return;
+            }
+            encoded_buffer[encoded_size] = '\0';
+
+            clab::plugins::comm_pub_message(topic_buffer, encoded_buffer, encoded_size);
+        }
+        else {
+            ESP_LOGE(MAIN_APP_TAG, "Report generation failed!");
+        }
+
+        
+
+        // ------------------------- End Telemetry publish
         if (main_app_time_refresh % CONFIG_MAIN_REFRESH_TIME_EVERY_LOOPS == 0) {
             clab::plugins::comm_refresh_rtc();
         }

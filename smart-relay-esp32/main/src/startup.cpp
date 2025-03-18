@@ -27,7 +27,7 @@ namespace clab::plugins {
         ESP_ERROR_CHECK(clab::iot_services::i2c_bus_init());
 
         #if defined(EDGE_BOARD_USES_I2C_ADC)
-            ESP_ERROR_CHECK(irreo::iot_services::adc_i2c_service_init());
+            ESP_ERROR_CHECK(clab::iot_services::adc_i2c_service_init());
         #else
             adc_service_init();
         #endif

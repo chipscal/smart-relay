@@ -115,22 +115,20 @@ namespace clab::iot_services
     float       io_current_input_status(uint8_t input);
 
     /// @brief Generates and stores the report inside an internal buffer and invokes the registered (if so) telem callback passing it.
-    /// @param enable_power true if 12V should be switched on (i.e. if not analog measures may be compromised),
     /// @param save_pulses true if actual pulse counters should be saved on flash,
     /// @return ESP_Ok on success.
     /// @note Do not to save too much times pulse counters over flash to avoid to rapidly break it (check max write cycles per cell).
     /// @note this function is thread safe.
-    esp_err_t   io_telem_report(bool enable_power, bool save_pulses);
+    esp_err_t   io_telem_report(bool save_pulses);
 
     /// @brief Generates and stores to a buffer the actual report.
     /// @param buffer where to store the report,
     /// @param buffer_size size of the buffer,
-    /// @param enable_power true if 12V should be switched on (i.e. if not analog measures may be compromised),
     /// @param save_pulses true if actual pulse counters should be saved on flash,
     /// @return ESP_Ok on success.
     /// @note Do not to save too much times pulse counters over flash to avoid to rapidly break it (check max write cycles per cell).
     /// @note this function is thread safe.
-    esp_err_t   io_buffer_report(uint8_t *buffer, int buffer_size, bool enable_power, bool save_pulses);
+    esp_err_t   io_buffer_report(uint8_t *buffer, int buffer_size, bool save_pulses);
 
     /// @brief Registers a callback executed everytime io_telem_report is invoked.
     /// @param method a method that elaborates the serialized report.
