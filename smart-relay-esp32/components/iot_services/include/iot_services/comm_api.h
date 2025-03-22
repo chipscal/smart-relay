@@ -1,6 +1,10 @@
 #pragma once
 
-#include "iot_services/io_service.h"
+#include "iot_services/iot_services.h"
+
+#include <cstring>
+#include <string>
+#include <stdint.h>
 
 namespace clab::iot_services
 {
@@ -40,13 +44,30 @@ namespace clab::iot_services
         port_def_t      port;
         unary_op_t      op;
         float           value;
-        const char      target[T];
+        char            target[T + 1];
 
-        unary_rule_t() {};
+        /// @brief Initialize empty.
+        unary_rule_t() {
+            memset(this, 0, sizeof(unary_rule_t));
+        };
 
         /// @brief Initializates from buffer.
-        /// @param buffer "<port_type><port_index><operator>,<target0:T-1>" (e.g. "d0=1,XXXXXXXXXXXXXXXX")
-        unary_rule_t(const char *buffer);
+        /// @param buffer "<port_type><port_index><operator><value>,<target0:T-1>" (e.g. "d0=1,XXXXXXXXXXXXXXXX")
+        unary_rule_t(const char *rule) {
+            memcpy(&port, rule, sizeof(port_def_t));
+            rule += sizeof(port_def_t);
+            
+            op = static_cast<unary_op_t>(rule[cnt]);
+            cnt++;
+
+            auto value_delimiter = strchr(rule + cnt, ',');
+            std::string value_string(rule + cnt, value_delimiter - cnt);
+            value = std::stof(value_string);
+            cnt = value_delimiter + 1;
+
+            memcpy(target, rule + cnt, T);
+            target[T] = '\0';
+        }
     };
 
     template<size_t N, size_t T>
@@ -54,12 +75,28 @@ namespace clab::iot_services
         unary_rule_t<T>     rules[N];
         port_def_t          action;
 
-        combined_rule_t() {};
+        /// @brief Initialize empty
+        combined_rule_t() {
+            memset(this, 0, sizeof(combined_rule_t));
+        };
 
         /// @brief Initializates from buffer.
         /// @param buffer "[<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>]<port_type><port_index>" 
         /// (e.g. "[d0=1,XXXXXXXXXXXXXXX1;v0=1.22,XXXXXXXXXXXXXXX2]r0")
-        combined_rule_t(const char *buffer);
+        combined_rule_t(const char *crule) {
+            crule += 1;
+            for (size_t k = 0; k < N, k++) {
+                auto delimiter = strchr(crule, k < N - 1 ? ';' : ']');
+                if (delimiter > crule + 1)
+                    rules[k] = unary_rule_t<T>(crule);
+                else
+                    rules[k] = unary_rule_t<T>();
+                
+                crule = delimiter + 1;
+            }
+
+            memcpy(&action, crule, sizeof(port_def_t));
+        }
     };
 
 
@@ -76,53 +113,138 @@ namespace clab::iot_services
         /// @note No copy is made.
         dev_status_t(uint8_t *buffer, size_t buffer_size);
 
+        // HREV|SREV|n_curr[0:3],n_volt[4:7]|n_pulse[0:3],n_temperature[4:7]|
+        // Latch0|Latch1|Latch2|Latch3|Relay0|Relay1|Relay2|Relay3 (bit mask)
+        // Digital0|Digital1|Digital2|Digital3 (bit mask)
+        // Current0_LSB|Current0_MSB|...|CurrentN_LSB|CurrentN_MSB
+        // Voltage0_LSB|Voltage0_MSB|...|VoltageN_LSB|VoltageN_MSB
+        // Pulse0_LSB|Pulse0_MSB|...|PulseN_LSB|PulseN_MSB
+        // Temperature0_LSB|Temperature0_MSB|...|TemperatureN_LSB|TemperatureN_MSB
+
         /// @brief Hardware revision.
-        uint8_t     hrev();
+        inline uint8_t     hrev() {
+            return _data_buffer[0];
+        }
         /// @brief Software revision.
-        uint8_t     srev();
+        inline uint8_t     srev() {
+            return (_data_buffer[1] & 0xF0) >> 4;
+        }
+
+        /// @brief Software minor.
+        inline uint8_t     sminor() {
+            return _data_buffer[1] & 0x0F;
+        }
+
         /// @brief Number of installed current input.
-        uint8_t     n_curr();
+        inline uint8_t     n_curr() {
+            return (_data_buffer[2] & 0xF0) >> 4;
+        }
+
         /// @brief Number of installed voltage input.
-        uint8_t     n_volt();
+        inline uint8_t     n_volt() {
+            return _data_buffer[2] & 0x0F;
+        }
+
         /// @brief Number of installed pulse input.
-        uint8_t     n_pulse();
+        inline uint8_t     n_pulse() {
+            return (_data_buffer[3] & 0xF0) >> 4;
+        }
         /// @brief Number of installed temperature sensor.
-        uint8_t     n_temperature();
+        inline uint8_t     n_temperature() {
+            return _data_buffer[3] & 0x0F;
+        }
         
         /// @brief Latch output status.
         /// @param idx of the output
         /// @return true if active
-        bool        latch_status(int idx);
+        inline bool        latch_status(int idx) {
+            uint32_t mask;
+            memcpy(&mask, _data_buffer + 4, sizeof(uint32_t));
+            if (!is_little_endian())
+                mask = swap_uint32(mask);
+
+            return ((mask & (1 << idx)) > 0);
+        }
 
         /// @brief Relay output status.
         /// @param idx of the output
         /// @return true if active
-        bool        relay_status(int idx);
+        inline bool        relay_status(int idx){
+            uint32_t mask;
+            memcpy(&mask, _data_buffer + 8, sizeof(uint32_t));
+            if (!is_little_endian())
+                mask = swap_uint32(mask);
+
+            return ((mask & (1 << idx)) > 0);
+        }
 
         /// @brief Digital input status.
         /// @param idx of the input
         /// @return true if logically high
-        bool        digital_status(int idx);
+        inline bool        digital_status(int idx){
+            uint32_t mask;
+            memcpy(&mask, _data_buffer + 12, sizeof(uint32_t));
+            if (!is_little_endian())
+                mask = swap_uint32(mask);
+
+            return ((mask & (1 << idx)) > 0);
+        }
 
         /// @brief Current input value.
         /// @param idx of the input
         /// @return mA
-        float       current_value(int idx);
+        inline float       current_value(int idx) {
+            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * idx;
+
+            uint16_t value;
+            memcpy(&value, base_address, sizeof(uint16_t));
+            if (!is_little_endian())
+                value = swap_uint16(value);
+
+            return static_cast<float>(value) / 1000.0f;
+        }
 
         /// @brief Voltage input value.
         /// @param idx of the input
         /// @return mV
-        float       voltage_value(int idx);
+        inline float       voltage_value(int idx) {
+            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + idx);
+
+            uint16_t value;
+            memcpy(&value, base_address, sizeof(uint16_t));
+            if (!is_little_endian())
+                value = swap_uint16(value);
+
+            return static_cast<float>(value);
+        }
 
         /// @brief Pulse input value.
         /// @param idx of the input
         /// @return pulse count
-        uint16_t    pulse_value(int idx);
+        inline uint16_t    pulse_value(int idx) {
+            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + idx);
+
+            uint16_t value;
+            memcpy(&value, base_address, sizeof(uint16_t));
+            if (!is_little_endian())
+                value = swap_uint16(value);
+
+            return value;
+        }
 
         /// @brief Temperature input value.
         /// @param idx of the input
         /// @return K
-        float       temperature_value(int idx);
+        inline float       temperature_value(int idx) {
+            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + n_pulse() + idx);
+
+            uint16_t value;
+            memcpy(&value, base_address, sizeof(uint16_t));
+            if (!is_little_endian())
+                value = swap_uint16(value);
+
+            return static_cast<float>(value) / 100.0f;
+        }
 
     };
 
@@ -135,13 +257,37 @@ namespace clab::iot_services
         /// @brief Led channel status - (1 << idx) => means Led[idx] control should be enabled.
         uint8_t     led_mask;
 
-        bool        latch_status(int idx);
-        void        latch_status(int idx, bool status);
+        inline bool latch_status(int idx) {
+            return ((latch_mask & (1 << idx)) > 0);
+        }
 
-        bool        relay_status(int idx);
-        void        relay_status(int idx, bool status);
+        inline void latch_status(int idx, bool status) {
+            if (status)
+                latch_mask |= (1 << idx);
+            else
+                latch_mask &= ~(1 << idx);
+        }
 
-        bool        led_status(int idx);
-        void        led_status(int idx, bool status);
+        inline bool relay_status(int idx) {
+            return ((relay_mask & (1 << idx)) > 0);
+        }
+
+        inline void relay_status(int idx, bool status) {
+            if (status)
+                relay_mask |= (1 << idx);
+            else
+                relay_mask &= ~(1 << idx);
+        }
+
+        inline bool led_status(int idx) {
+            return ((led_mask & (1 << idx)) > 0);
+        }
+
+        inline void led_status(int idx, bool status) {
+            if (status)
+                led_mask |= (1 << idx);
+            else
+                led_mask &= ~(1 << idx);
+        }
     };
 }
