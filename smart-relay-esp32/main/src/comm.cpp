@@ -9,6 +9,8 @@
 
 #include "string.h"
 #include <string>
+#include <string_view>
+#include <algorithm>
 #include <array>
 #include <unordered_map>
 
@@ -82,6 +84,31 @@ namespace clab::plugins {
         return ESP_OK;
     }
 
+    static bool compare_with_wildcards(std::string subject, std::string test) {
+
+        auto subject_iter = subject.begin();
+        auto test_iter = test.begin();
+
+        while (subject_iter < subject.end() && test_iter < test.end()) {
+            
+            auto subject_delim = std::find(subject_iter, subject.end(), '/');
+            auto subject_sub = std::string_view(subject_iter, subject_delim);
+            subject_iter = subject_delim + 1;
+
+            auto test_delim = std::find(test_iter, test.end(), '/');
+            auto test_sub = std::string_view(test_iter, test_delim);
+            test_iter = test_delim + 1;
+
+            if (subject_delim == subject.end() && subject_sub.compare("#") == 0)
+                break;
+                
+            if (subject_sub.compare("+") != 0 && subject_sub.compare(test_sub) != 0)
+                return false;
+        }
+
+        return true;
+    }
+
     /*
     * @brief Event handler registered to receive MQTT events
     *
@@ -119,8 +146,13 @@ namespace clab::plugins {
             ESP_LOGI(TAG, "TOPIC=%.*s", event->topic_len, event->topic);
             ESP_LOGI(TAG, "DATA=%.*s", event->data_len, event->data);
 
-            if (comm_callbacks.contains(event->topic)) {
-                comm_callbacks[event->topic](event->topic, event->data, event->data_len);
+            for (auto callback_kv : comm_callbacks) {
+                ESP_LOGI(TAG, "Comparing with: %s", callback_kv.first.c_str());
+                if (compare_with_wildcards(callback_kv.first, std::string(event->topic, event->topic_len))) {
+                    ESP_LOGI(TAG, "Found!");
+                    comm_callbacks[callback_kv.first](event->topic, event->data, event->data_len);
+                    break;
+                }
             }
             break;
         case MQTT_EVENT_ERROR:

@@ -99,7 +99,7 @@ extern "C" void app_main(void)
     clab::plugins::comm_mqtt_client_start(is_local_broker);
     vTaskDelay(pdMS_TO_TICKS(5000));
     clab::plugins::comm_sub_message("/dev/+/telem", [](auto topic, auto payload, auto payload_size) {
-        ESP_LOGI(MAIN_APP_TAG, "Message: %s", payload);
+        ESP_LOGI(MAIN_APP_TAG, "Message: %.*s", payload_size, payload);
     });
     
     // ...

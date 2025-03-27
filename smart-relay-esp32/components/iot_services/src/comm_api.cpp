@@ -1,7 +1,6 @@
 #include "iot_services/comm_api.h"
 
 #include "esp_log.h"
-#include "comm_api.h"
 
 static const char *TAG = "iot_services::comm_api";
 

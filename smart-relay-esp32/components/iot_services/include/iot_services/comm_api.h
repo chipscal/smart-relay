@@ -29,7 +29,7 @@ namespace clab::iot_services
 
     /// @brief I/O port types.
     enum unary_op_t : uint8_t {
-        EMPTY       = 0x0,
+        NOPE       = 0x0,
         EQ          = '=',
         NEQ         = '!',
         GT          = '>',
@@ -52,20 +52,25 @@ namespace clab::iot_services
         };
 
         /// @brief Initializates from buffer.
-        /// @param buffer "<port_type><port_index><operator><value>,<target0:T-1>" (e.g. "d0=1,XXXXXXXXXXXXXXXX")
+        /// @param buffer "<port_type><port_index><operator><value>,<target0:T-1>" (e.g. "d[0]=1,XXXXXXXXXXXXXXXX")
         unary_rule_t(const char *rule) {
-            memcpy(&port, rule, sizeof(port_def_t));
-            rule += sizeof(port_def_t);
             
-            op = static_cast<unary_op_t>(rule[cnt]);
-            cnt++;
+            port.type = static_cast<port_type_t>(rule[0]);
+            rule += 2;
+            auto index_delimiter = strchr(rule, ']');
+            std::string index_view(rule, static_cast<size_t>(index_delimiter - rule));
+            port.index = std::stoul(index_view);
+            rule = index_delimiter + 1;
 
-            auto value_delimiter = strchr(rule + cnt, ',');
-            std::string value_string(rule + cnt, value_delimiter - cnt);
+            op = static_cast<unary_op_t>(*rule);
+            rule++;
+
+            auto value_delimiter = strchr(rule, ',');
+            std::string value_string(rule, static_cast<size_t>(value_delimiter - rule));
             value = std::stof(value_string);
-            cnt = value_delimiter + 1;
+            rule = value_delimiter + 1;
 
-            memcpy(target, rule + cnt, T);
+            memcpy(target, rule, T);
             target[T] = '\0';
         }
     };
@@ -81,12 +86,12 @@ namespace clab::iot_services
         };
 
         /// @brief Initializates from buffer.
-        /// @param buffer "[<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>]<port_type><port_index>" 
-        /// (e.g. "[d0=1,XXXXXXXXXXXXXXX1;v0=1.22,XXXXXXXXXXXXXXX2]r0")
+        /// @param buffer "{<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>}<port_type><port_index>" 
+        /// (e.g. "{d[0]=1,XXXXXXXXXXXXXXX1;v[0]=1.22,XXXXXXXXXXXXXXX2}r0")
         combined_rule_t(const char *crule) {
             crule += 1;
-            for (size_t k = 0; k < N, k++) {
-                auto delimiter = strchr(crule, k < N - 1 ? ';' : ']');
+            for (size_t k = 0; k < N; k++) {
+                auto delimiter = strchr(crule, k < N - 1 ? ';' : '}');
                 if (delimiter > crule + 1)
                     rules[k] = unary_rule_t<T>(crule);
                 else
@@ -95,7 +100,9 @@ namespace clab::iot_services
                 crule = delimiter + 1;
             }
 
-            memcpy(&action, crule, sizeof(port_def_t));
+            action.type = static_cast<port_type_t>(crule[0]);
+            crule += 1;
+            action.index = atoi(crule);
         }
     };
 

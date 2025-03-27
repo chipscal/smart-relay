@@ -87,7 +87,7 @@ void io_test_impl() {
 
     clab::iot_services::io_telem_register_callback(telem_callback);
 
-    result = clab::iot_services::io_telem_report(true, true);
+    result = clab::iot_services::io_telem_report(true);
     TEST_ASSERT(result == ESP_OK);
     ESP_LOGI(TAG, "Telemetry test passed...");
 
