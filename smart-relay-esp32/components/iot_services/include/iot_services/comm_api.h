@@ -209,8 +209,8 @@ namespace clab::iot_services
             memset(this, 0, sizeof(combined_rule_t));
         };
 
-        /// @brief Initializates from buffer.
-        /// @param buffer "{<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>}<port_type><port_index>" 
+        /// @brief Initializates from string.
+        /// @param crule "{<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>}<port_type><port_index>" 
         /// (e.g. "{d[0]=1,XXXXXXXXXXXXXXX1;v[0]=1.22,XXXXXXXXXXXXXXX2}r0")
         esp_err_t parse_from(const char *crule) {
             size_t cnt = 0;
@@ -244,6 +244,59 @@ namespace clab::iot_services
 
             return ESP_OK;
         }
+    };
+
+    /// @brief Device program definition.
+    struct dev_program_t {
+        /// @brief Active latch definition.
+        uint32_t    latch_mask;
+        /// @brief Active relay definition.
+        uint32_t    relay_mask;
+
+        /// @brief Start timestamp.
+        uint32_t    start_ts;
+        /// @brief End timestamp.
+        /// @note if actual_ts > end_ts program will not activate anymore.
+        uint32_t    end_ts;
+
+        /// @brief Activation time in seconds.
+        uint32_t    duration;
+        /// @brief Idle time in seconds.
+        /// @note if positive, the program will activate again after <idle> seconds.
+        uint32_t    idle;
+
+
+        /// @brief Latch output status.
+        /// @param idx of the output
+        /// @return true if active
+        inline bool latch_status(int idx) {
+            return ((latch_mask & (1 << idx)) > 0);
+        }
+
+        /// @brief Relay output status.
+        /// @param idx of the output
+        /// @return true if active
+        inline bool relay_status(int idx){
+            return ((relay_mask & (1 << idx)) > 0);
+        }
+
+        /// @brief check if program do not activate any output.
+        /// @return true if no output are activated.
+        inline bool is_empty() {
+            return latch_mask == 0 && relay_mask == 0;
+        }
+
+        /// @brief Compute the porogram period.
+        /// @return the period or UINT32_MAX if idle is 0;
+        inline uint32_t period() {
+            return idle > 0 ? duration + idle : UINT32_MAX;
+        }
+
+        /// @brief Initializates from string.
+        /// @param program "{<start_ts>,<end_ts>,<duration>,<idle>}[<port0_type><port0_index>, ... ,<portK_type><portK_index>]" 
+        /// (e.g. "{1744047771,1751305371,14400,72000}[r0,l0]")
+        /// @return ESP_OK on success.
+        esp_err_t parse_from(const char *program);
     };
 
 
