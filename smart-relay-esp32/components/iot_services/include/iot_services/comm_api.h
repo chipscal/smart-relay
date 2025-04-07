@@ -44,6 +44,10 @@ namespace clab::iot_services
         /// @brief Relay configuration.
         port_conf_t relay_conf[Nr];
 
+        constexpr size_t size() {
+            return (Nl + Nr) * sizeof(port_conf_t);
+        }
+
         ports_conf_t() {
             memset(this, 0, sizeof(ports_conf_t<Nl, Nr>));
         }
@@ -66,6 +70,67 @@ namespace clab::iot_services
         }
 
     };
+
+    template<size_t Nr>
+    struct ports_conf_t<0U, Nr> {
+        /// @brief Latch configuration.
+        dummy_array<port_conf_t> latch_conf;
+        /// @brief Relay configuration.
+        port_conf_t relay_conf[Nr];
+
+        constexpr size_t size() {
+            return Nr * sizeof(port_conf_t);
+        }
+
+        esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(relay_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+            
+            memcpy(relay_conf, buffer + offset, Nr * sizeof(port_conf_t));
+            offset += Nr * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+    };
+
+    template<size_t Nl>
+    struct ports_conf_t<Nl, 0U> {
+        /// @brief Latch configuration.
+        port_conf_t latch_conf[Nl];
+        /// @brief Relay configuration.
+        dummy_array<port_conf_t> relay_conf;
+
+        constexpr size_t size() {
+            return Nl * sizeof(port_conf_t);
+        }
+
+        esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(latch_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+
+            memcpy(latch_conf, buffer + offset, Nl * sizeof(port_conf_t));
+            offset += Nl * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+    };
+
+    template<>
+    struct ports_conf_t<0U, 0U> {
+        /// @brief Latch configuration.
+        dummy_array<port_conf_t> latch_conf;
+        /// @brief Relay configuration.
+        dummy_array<port_conf_t> relay_conf;
+    };
+
 
     /// @brief I/O port types.
     enum unary_op_t : uint8_t {
@@ -106,7 +171,7 @@ namespace clab::iot_services
                 return ESP_ERR_INVALID_ARG;
             }
 
-            std::string_view index_string(rule + cnt, index_delimiter);
+            std::string index_string(rule + cnt, index_delimiter);
             port.index = std::stoul(index_string);
             cnt += index_delimiter + 1;
 
@@ -129,6 +194,8 @@ namespace clab::iot_services
 
             memcpy(target, rule + cnt, T);
             target[T] = '\0';
+
+            return ESP_OK;
         }
     };
 
@@ -160,7 +227,7 @@ namespace clab::iot_services
                 rules[k] = unary_rule_t<T>();
 
                 if (delimiter > 1) {
-                    eps_err_t result = rules[k].parse_from(crule + cnt);
+                    esp_err_t result = rules[k].parse_from(crule + cnt);
                     if (result != ESP_OK)   
                         return result;
                 }
@@ -174,6 +241,8 @@ namespace clab::iot_services
             action.type = static_cast<port_type_t>(crule[cnt]);
             cnt += 1;
             action.index = atoi(crule + cnt);
+
+            return ESP_OK;
         }
     };
 
