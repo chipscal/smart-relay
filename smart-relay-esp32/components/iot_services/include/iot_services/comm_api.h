@@ -2,8 +2,9 @@
 
 #include "iot_services/iot_services.h"
 
-#include <cstring>
+#include <string.h>
 #include <string>
+#include <string_view>
 #include <stdint.h>
 
 namespace clab::iot_services
@@ -25,6 +26,45 @@ namespace clab::iot_services
         port_type_t type;
         /// @brief Port index.
         uint8_t     index;
+    };
+
+    /// @brief Port parameters.
+    struct port_conf_t {
+        /// @brief Init delay - seconds.
+        uint8_t     init_d;
+        /// @brief Stop delay - seconds.
+        uint8_t     stop_d;
+    };
+
+    /// @brief Output ports parameters.
+    template<size_t Nl, size_t Nr>
+    struct ports_conf_t {
+        /// @brief Latch configuration.
+        port_conf_t latch_conf[Nl];
+        /// @brief Relay configuration.
+        port_conf_t relay_conf[Nr];
+
+        ports_conf_t() {
+            memset(this, 0, sizeof(ports_conf_t<Nl, Nr>));
+        }
+
+        esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(latch_conf) + sizeof(relay_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+
+            memcpy(latch_conf, buffer + offset, Nl * sizeof(port_conf_t));
+            offset += Nl * sizeof(port_conf_t);
+            
+            memcpy(relay_conf, buffer + offset, Nr * sizeof(port_conf_t));
+            offset += Nr * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+
     };
 
     /// @brief I/O port types.
@@ -53,24 +93,41 @@ namespace clab::iot_services
 
         /// @brief Initializates from buffer.
         /// @param buffer "<port_type><port_index><operator><value>,<target0:T-1>" (e.g. "d[0]=1,XXXXXXXXXXXXXXXX")
-        unary_rule_t(const char *rule) {
+        esp_err_t parse_from(const char *rule) {
+
+            size_t cnt = 0;
+            size_t rule_size = strlen(rule);
             
             port.type = static_cast<port_type_t>(rule[0]);
-            rule += 2;
-            auto index_delimiter = strchr(rule, ']');
-            std::string index_view(rule, static_cast<size_t>(index_delimiter - rule));
-            port.index = std::stoul(index_view);
-            rule = index_delimiter + 1;
+            cnt += 2;
+            std::string_view rule_view(rule + cnt);
+            auto index_delimiter = rule_view.find(']');
+            if (index_delimiter == rule_view.npos) {
+                return ESP_ERR_INVALID_ARG;
+            }
 
-            op = static_cast<unary_op_t>(*rule);
-            rule++;
+            std::string_view index_string(rule + cnt, index_delimiter);
+            port.index = std::stoul(index_string);
+            cnt += index_delimiter + 1;
 
-            auto value_delimiter = strchr(rule, ',');
-            std::string value_string(rule, static_cast<size_t>(value_delimiter - rule));
+            op = static_cast<unary_op_t>(rule[cnt]);
+            cnt++;
+
+            rule_view = std::string_view(rule + cnt);
+            auto value_delimiter = rule_view.find(',');
+            if (index_delimiter == rule_view.npos) {
+                return ESP_ERR_INVALID_ARG;
+            }
+
+            std::string value_string(rule + cnt, value_delimiter);
             value = std::stof(value_string);
-            rule = value_delimiter + 1;
+            cnt += value_delimiter + 1;
 
-            memcpy(target, rule, T);
+            if (rule_size - cnt < T) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+
+            memcpy(target, rule + cnt, T);
             target[T] = '\0';
         }
     };
@@ -88,21 +145,35 @@ namespace clab::iot_services
         /// @brief Initializates from buffer.
         /// @param buffer "{<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>}<port_type><port_index>" 
         /// (e.g. "{d[0]=1,XXXXXXXXXXXXXXX1;v[0]=1.22,XXXXXXXXXXXXXXX2}r0")
-        combined_rule_t(const char *crule) {
-            crule += 1;
+        esp_err_t parse_from(const char *crule) {
+            size_t cnt = 0;
+            size_t crule_size = strlen(crule);
+
+            cnt += 1;
             for (size_t k = 0; k < N; k++) {
-                auto delimiter = strchr(crule, k < N - 1 ? ';' : '}');
-                if (delimiter > crule + 1)
-                    rules[k] = unary_rule_t<T>(crule);
-                else
-                    rules[k] = unary_rule_t<T>();
+                std::string_view crule_view(crule + cnt);
+                auto delimiter = crule_view.find(k < N - 1 ? ';' : '}');
+                if (delimiter == crule_view.npos) {
+                    return ESP_ERR_INVALID_ARG;
+                }
+
+                rules[k] = unary_rule_t<T>();
+
+                if (delimiter > 1) {
+                    eps_err_t result = rules[k].parse_from(crule + cnt);
+                    if (result != ESP_OK)   
+                        return result;
+                }
                 
-                crule = delimiter + 1;
+                cnt += delimiter + 1;
             }
 
-            action.type = static_cast<port_type_t>(crule[0]);
-            crule += 1;
-            action.index = atoi(crule);
+            if (crule_size - cnt < 2)
+                return ESP_ERR_INVALID_SIZE;
+
+            action.type = static_cast<port_type_t>(crule[cnt]);
+            cnt += 1;
+            action.index = atoi(crule + cnt);
         }
     };
 
