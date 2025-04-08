@@ -58,6 +58,17 @@ void comm_api_test_impl() {
     TEST_ASSERT(combined0.action.type == clab::iot_services::port_type_t::RELAY);
     TEST_ASSERT(combined0.action.index == 0);
 
+    auto program = clab::iot_services::dev_program_t();
+    TEST_ASSERT(program.parse_from("{1744047771,1751305371,14400,72000}[r16,l15]"));
+    TEST_ASSERT(program.start_ts == 1744047771);
+    TEST_ASSERT(program.end_ts == 1751305371);
+    TEST_ASSERT(program.duration == 14400);
+    TEST_ASSERT(program.idle == 72000);
+    TEST_ASSERT(program.latch_status(15));
+    TEST_ASSERT(program.latch_status(0) == false);
+    TEST_ASSERT(program.relay_status(16));
+    TEST_ASSERT(program.relay_status(1) == false);
+
 }
 
 #ifdef __cplusplus
