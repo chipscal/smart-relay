@@ -20,7 +20,7 @@
 #include "iot_services/wifi_service.h"
 #include "iot_services/board.h"
 
-#include "mosq_broker.h"
+#include "mosq_broker_c_api.h"
 #include "mqtt_client.h"
 
 static const char *TAG = "plugins::comm";

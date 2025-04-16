@@ -31,7 +31,7 @@ namespace clab::iot_services {
 
     SemaphoreHandle_t               ctrl_mutex = NULL;
 
-    esp_err_t ctrl_init(dev_status_t &status, bool init_from_storage) {
+    esp_err_t ctrl_init(bool init_from_storage) {
         constexpr unsigned int prop_needs[] = {
                 sizeof(port_conf_t) * (io_n_latch + io_n_relay), 
                 clab::iot_services::io_buffer_report_size

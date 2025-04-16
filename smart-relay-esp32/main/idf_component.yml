@@ -1,6 +1,6 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  espressif/mosquitto: "^2.0.20~1"
+  espressif/mosquitto: "^2.0.20~2"
   ## Required IDF version
   idf:
     version: ">=4.1.0"

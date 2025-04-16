@@ -73,4 +73,17 @@ menu "Main Service"
         help 
             If defined mqtt client connects to this URI.
 
+    config CONTROL_LOOP_INTERVAL_MILLIS
+        int "Control loop task interval (ms)"
+        default 1000
+        help 
+            Control task interval is used to schedule at precise intervall the control loop logic.
+
+    config CONTROL_SEND_STATUS_MAX_EVERY_LOOPS
+        int "Amount of control loops from last time after while telemetry can be sent due to output ports change."
+        default 30
+        help 
+            The actual time in milliseconds depends from the control loop interval.
+        
+
 endmenu

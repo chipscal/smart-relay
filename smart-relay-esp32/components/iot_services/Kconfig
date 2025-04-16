@@ -4,12 +4,12 @@ menu "IoT Service"
         default SMART_RELAY_WIFI_R1
     
         config SMART_RELAY_WIFI_R1
-            tristate "Smart Relay WiFi R1"
+            bool "Smart Relay WiFi R1"
             help 
                 Select this option if you have a Smart Relay WiFi R1
         
         config DEVELOPMENT_BOARD
-            tristate "Dev"
+            bool "Dev"
             help 
                 Select this option if you have a development board (e.g. WROVER-KIT-V4)
         

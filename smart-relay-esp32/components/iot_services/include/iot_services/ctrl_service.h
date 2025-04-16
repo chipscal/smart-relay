@@ -10,7 +10,7 @@ namespace clab::iot_services {
     /// @brief Initialize control service and loads last saved programs and controllers from flash.
     /// @return ESP_OK on success.
     /// @note this function is NOT thread safe and must me called only one time during deinitialization!
-    esp_err_t        ctrl_init(dev_status_t &status, bool init_from_storage = true);
+    esp_err_t        ctrl_init(bool init_from_storage = true);
     
     /// @brief Cleans up resources.
     /// @return ESP_OK on success.
