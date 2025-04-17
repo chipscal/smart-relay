@@ -51,9 +51,9 @@ namespace clab::iot_services {
         //try to restore last settings...
         //ports
         if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "ports", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
-            ESP_LOGI(TAG, "Founded setting \"ports\":%s", buffer);
+            ESP_LOGI(TAG, "Founded setting \"ports\":%.*s (%d bytes)", out_size, buffer, out_size);
 
-            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size - 1) == 0) {
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
                 
                 clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
                 ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);

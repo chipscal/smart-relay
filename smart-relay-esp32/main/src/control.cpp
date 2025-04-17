@@ -47,8 +47,10 @@ namespace clab::plugins {
 
     static void on_property_update(const char *topic, const char *payload, size_t payload_size);
     static void on_cmd_received(const char *topic, const char *payload, size_t payload_size);
-
+    static void on_telem_received(const char *topic, const char *payload, size_t payload_size);
     
+    std::array<clab::iot_services::combined_rule_t<4, 16>, 8>              control_rules;
+
 
     void control_task(void *params) {
 
@@ -117,8 +119,10 @@ namespace clab::plugins {
     
     esp_err_t control_plugin() {
         constexpr unsigned int buffer_needs[] = {
-                clab::iot_services::io_buffer_report_size, 
-                32 + 1
+                clab::iot_services::io_buffer_report_size,
+                2 * sizeof(uint32_t), 
+                32 + 1,
+                255
         };
 
         if (control_mutex == NULL) {
@@ -128,7 +132,7 @@ namespace clab::plugins {
 
         uint8_t buffer[clab::iot_services::alligned_big_enough(clab::iot_services::array_max(buffer_needs))];
         size_t  out_size = 0;
-        uint8_t prop_value_buffer[clab::iot_services::alligned_big_enough(2 * sizeof(uint32_t))];
+        uint8_t prop_value_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::array_max(buffer_needs))];
         size_t  prop_size = 0;
 
         memset(&overrides, 0, sizeof(clab::iot_services::des_status_t));
@@ -143,10 +147,12 @@ namespace clab::plugins {
         sprintf(topic_buffer, "/dev/%s/cmd/+/exec", clab::plugins::comm_get_device_uid());
         ESP_ERROR_CHECK(comm_sub_message(topic_buffer, on_cmd_received));
 
-        if ( clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "over", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
-            ESP_LOGI(TAG, "Founded setting \"over\":%s - size: %u", buffer, out_size);
+        ESP_ERROR_CHECK(comm_sub_message("/dev/+/telem", on_telem_received));
+
+        if (clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "over", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"over\":%.*s - size: %u", out_size, buffer, out_size);
             
-            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size - 1) == 0) {
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
                 
                 clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
                 ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
@@ -169,6 +175,24 @@ namespace clab::plugins {
 
             clab::iot_services::sprint_uint32_binary((char *)buffer, overrides.relay_mask);
             ESP_LOGI(TAG, "Relay override: %s", buffer);
+        }
+
+        for (int k = 0; k < control_rules.size(); k++) {
+            char key_buf[8];
+            snprintf(key_buf, 8, "rule%d", k);
+
+            control_rules[k] = clab::iot_services::combined_rule_t<4, 16>();
+           
+            if (clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+                ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
+
+                if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                    prop_value_buffer[out_size] = '\0';
+                    if (control_rules[k].parse_from((char *)prop_value_buffer) != ESP_OK) {
+                        memset(&(control_rules[k]), 0, sizeof(clab::iot_services::combined_rule_t<4, 16>));
+                    }
+                }
+            }
         }
 
         control_task_loop_cnt = 0;
@@ -203,50 +227,78 @@ namespace clab::plugins {
         return "";
     }
 
-    static bool on_property_update(const char *topic, const char *payload, size_t payload_size) {
+    static void on_property_update(const char *topic, const char *payload, size_t payload_size) {
         esp_err_t result;
+        uint8_t decoded_buffer[256];
+        size_t  decoded_size;
+        char topic_buffer[64];
 
         auto alias_string = extract_from_topic(topic, 4);
-        if (alias_string.empty())
-            return false;
-
+        if (alias_string.empty()) {
+            ESP_LOGE(TAG, "Invalid empty property! Ignoring...");
+            return;
+        }
+        
         ESP_LOGI(TAG, "Received property: %s", alias_string.c_str());
+        bool prop_is_ok = false;
 
         if (alias_string.compare("ports") == 0) {
+            if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                    (const unsigned char *)payload, payload_size) != 0) {
+                ESP_LOGE(TAG, "Malformed or too big message!");
+                return;
+            }
+
             clab::iot_services::ports_conf_t<clab::iot_services::io_n_latch, clab::iot_services::io_n_relay> ports;
-            if (ports.from_buffer(payload, payload_size) != ESP_OK) {
+            if (ports.from_buffer(decoded_buffer, decoded_size) != ESP_OK) {
                 ESP_LOGE(TAG, "Unable to deserialize ports!");
-                return false;
+                return;
             }
             result = clab::iot_services::ctrl_set_ports(ports);
             if (result != ESP_OK) {
                 ESP_LOGE(TAG, "Ports Unable to set!");
-                return false;
+                return;
             }
+
+            prop_is_ok = true;
         }
 
         if (alias_string.compare("over") == 0) {
-            memcpy(&(overrides.latch_mask), payload, sizeof(uint32_t));
+            if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                    (const unsigned char *)payload, payload_size) != 0) {
+                ESP_LOGE(TAG, "Malformed or too big message!");
+                return;
+            }
+
+            memcpy(&(overrides.latch_mask), decoded_buffer, sizeof(uint32_t));
             if (!clab::iot_services::is_little_endian()) {
                 overrides.latch_mask = clab::iot_services::swap_uint32(overrides.latch_mask);
             }
 
-            memcpy(&(overrides.relay_mask), payload + sizeof(uint32_t), sizeof(uint32_t));
+            memcpy(&(overrides.relay_mask), decoded_buffer + sizeof(uint32_t), sizeof(uint32_t));
             if (!clab::iot_services::is_little_endian()) {
                 overrides.relay_mask = clab::iot_services::swap_uint32(overrides.relay_mask);
             }
+
+            prop_is_ok = true;
         }
 
         if (alias_string.compare("pdelay") == 0) {
+            if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                    (const unsigned char *)payload, payload_size) != 0) {
+                ESP_LOGE(TAG, "Malformed or too big message!");
+                return;
+            }
+
             uint16_t delays[clab::iot_services::io_n_pulse];
-            if (payload_size != sizeof(delays)) {
+            if (decoded_size != sizeof(delays)) {
                 ESP_LOGE(TAG, "pdelay size is invalid!");
-                return false;
+                return;
             }
 
             for (int k = 0; k < clab::iot_services::io_n_pulse; k++) {
                 uint16_t value = 0;
-                memcpy((uint8_t *)&value, payload + k * sizeof(uint16_t), sizeof(uint16_t));
+                memcpy((uint8_t *)&value, decoded_buffer + k * sizeof(uint16_t), sizeof(uint16_t));
 
                 if (!clab::iot_services::is_little_endian()) {
                     value = clab::iot_services::swap_uint16(value);
@@ -258,22 +310,86 @@ namespace clab::plugins {
             esp_err_t result = clab::iot_services::io_pulse_filter_set(delays, clab::iot_services::io_n_pulse);
             if (result != ESP_OK) {
                 ESP_LOGE(TAG, "Unable to set pulse filter delays!");
-                return false;
+                return;
             }
+
+            prop_is_ok = true;
         }
 
-        return true;
+        if (alias_string.starts_with("rule")) {
+            if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                    (const unsigned char *)payload, payload_size) != 0) {
+                ESP_LOGE(TAG, "Malformed or too big message!");
+                return;
+            }
+            decoded_buffer[decoded_size] = '\0';
+
+            auto suffix = alias_string.substr(4);
+            auto idx = static_cast<uint8_t>(std::stod(suffix));
+
+            xSemaphoreTake(control_mutex, portMAX_DELAY);
+            if (control_rules[idx].parse_from((char *)decoded_buffer) == ESP_OK) {
+                prop_is_ok = true;
+            }
+            xSemaphoreGive(control_mutex);
+
+        }
+
+        if (prop_is_ok) {
+            // Save on storage...
+            ESP_LOGI(TAG, "Saving data: %.*s, (%d bytes)", payload_size, payload, payload_size);
+            result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                    alias_string.c_str(), payload, payload_size); 
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Unable to save property!");
+                return;
+            }
+    
+            // Send notify
+            sprintf(topic_buffer, "/dev/%s/prop/%s/value", clab::plugins::comm_get_device_uid(), alias_string.c_str());
+            result = comm_pub_message(topic_buffer, (const uint8_t *)payload, payload_size);
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Cannot pub telemetry!");
+                return;
+            }
+        }
     }
 
-    static bool on_cmd_received(const char *topic, const char *payload, size_t payload_size) {
+    static void on_cmd_received(const char *topic, const char *payload, size_t payload_size) {
         esp_err_t result;
+        uint8_t decode_encode_buffer[256];
+        size_t  decoded_encoded_size;
+        char topic_buffer[64];
+        char key_buffer[32];
 
         auto cmd_string = extract_from_topic(topic, 4);
         if (cmd_string.empty())
-            return false;
+            return;
 
         ESP_LOGI(TAG, "Received cmd: %s", cmd_string.c_str());
         
+
+        if (mbedtls_base64_decode(decode_encode_buffer, sizeof(decode_encode_buffer), &decoded_encoded_size, 
+                (const unsigned char *)payload, payload_size) != 0) {
+            ESP_LOGE(TAG, "Malformed or too big message!");
+            return;
+        }
+
+        bool do_ack = true;
+        bool ack    = true;
+
+        // Message format:
+        // TIME0|TIME1|TIME2|TIME3|PAYLOAD...
+        if (decoded_encoded_size < 4) {
+            ESP_LOGE(TAG, "Malformed message!");
+            return;
+        }
+
+        uint32_t ts = 0;
+        memcpy(&ts, decode_encode_buffer, sizeof(uint32_t));
+        if (!clab::iot_services::is_little_endian())
+            ts = clab::iot_services::swap_uint32(ts);
+
         if (cmd_string.compare("restart") == 0) {
             ESP_LOGI(TAG, "Board is going to be restarted...");
             clab::iot_services::board_clean_restart();
@@ -287,10 +403,57 @@ namespace clab::plugins {
             result = clab::iot_services::io_latch_refresh();
             if (result != ESP_OK) {
                 ESP_LOGE(TAG, "Error during latch refresh: %s", esp_err_to_name(result));
-                return false;
+                return;
+            }
+        }
+        else if (cmd_string.compare("query") == 0) {
+            do_ack = false;
+            size_t out_size;
+
+            bool property_valid = true;
+            if (decoded_encoded_size - sizeof(uint32_t) + 1 > sizeof(key_buffer)) {
+                ESP_LOGE(TAG, "Property alias too big!");
+                property_valid = false;
+            }
+            else {
+
+                sprintf(key_buffer, "%.*s", decoded_encoded_size - sizeof(uint32_t), decode_encode_buffer + sizeof(uint32_t));
+                sprintf(topic_buffer, "/dev/%s/prop/%.*s/value", clab::plugins::comm_get_device_uid(), decoded_encoded_size - sizeof(uint32_t), decode_encode_buffer + sizeof(uint32_t));
+                ESP_LOGI(TAG, "Requested property: %s", key_buffer);
+            } 
+
+            if (property_valid && clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buffer, (char *)decode_encode_buffer, sizeof(decode_encode_buffer), &out_size) == ESP_OK) {
+                result = comm_pub_message(topic_buffer, decode_encode_buffer, out_size);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Cannot pub telemetry!");
+                    return;
+                }
+            }
+            else {
+                do_ack = true;
+                ack = false;
             }
         }
 
-        return true;
+        if (do_ack) {
+            if (mbedtls_base64_encode((unsigned char *)decode_encode_buffer, sizeof(decode_encode_buffer), 
+                    &decoded_encoded_size, (unsigned char *)&ts, sizeof(uint32_t)) < 0) {
+                ESP_LOGE(TAG, "Unable to byte64 encode command ack, too big!");
+                return;
+            }
+
+            sprintf(topic_buffer, "/dev/%s/cmd/%s/%s", clab::plugins::comm_get_device_uid(), cmd_string.c_str(), ack ? "ack" : "nack");
+            result = comm_pub_message(topic_buffer, decode_encode_buffer, decoded_encoded_size);
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Cannot pub telemetry!");
+                return;
+            }
+        }
+    }
+
+    static void on_telem_received(const char *topic, const char *payload, size_t payload_size) {
+        ESP_LOGI(TAG, "Message: %.*s", payload_size, payload);
+
+        //TODO: rule check here and override management!
     }
 }

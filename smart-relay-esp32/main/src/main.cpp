@@ -12,6 +12,7 @@
 
 #include "plugin/startup.h"
 #include "plugin/comm.h"
+#include "plugin/control.h"
 
 
 #include "esp_log.h"
@@ -98,10 +99,9 @@ extern "C" void app_main(void)
 
     clab::plugins::comm_mqtt_client_start(is_local_broker);
     vTaskDelay(pdMS_TO_TICKS(5000));
-    clab::plugins::comm_sub_message("/dev/+/telem", [](auto topic, auto payload, auto payload_size) {
-        ESP_LOGI(MAIN_APP_TAG, "Message: %.*s", payload_size, payload);
-    });
-    
+
+    ESP_ERROR_CHECK(clab::plugins::control_plugin());
+
     // ...
     //--------------------------------------------------------------------
 
@@ -156,7 +156,10 @@ extern "C" void app_main(void)
             }
             encoded_buffer[encoded_size] = '\0';
 
-            clab::plugins::comm_pub_message(topic_buffer, encoded_buffer, encoded_size);
+            result = clab::plugins::comm_pub_message(topic_buffer, encoded_buffer, encoded_size);
+            if (result != ESP_OK) {
+                ESP_LOGE(MAIN_APP_TAG, "Cannot pub telemetry!");
+            }
         }
         else {
             ESP_LOGE(MAIN_APP_TAG, "Report generation failed!");

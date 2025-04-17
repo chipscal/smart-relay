@@ -543,7 +543,7 @@ namespace clab::iot_services {
             auto value = (uint16_t)(
                     std::floor(std::max(0.0f, esp32_io_analog_voltage_get(k, a_volt_scales[k])))); //mV
             
-            ESP_LOGI(TAG, "V[%d]: %d mV", k, value);
+            ESP_LOGD(TAG, "V[%d]: %d mV", k, value);
 
             
             if (!clab::iot_services::is_little_endian())
