@@ -28,9 +28,11 @@ namespace clab::iot_services {
     std::array<uint32_t, 32>                            relay_last_switch;
     std::array<bool, 32>                                relay_logic_status;
 
+
     clab::iot_services::des_status_t                                       rules_action;
     std::array<clab::iot_services::combined_rule_t<4, 14>, 8>              control_rules;
     std::array<bool, 4 * 8>                                                control_inner_eval;
+    std::array<float, 4 * 8>                                               control_inner_last_measure;
 
 
     SemaphoreHandle_t               ctrl_mutex = NULL;
@@ -38,7 +40,8 @@ namespace clab::iot_services {
     esp_err_t ctrl_init(bool init_from_storage) {
         constexpr unsigned int prop_needs[] = {
                 sizeof(port_conf_t) * (io_n_latch + io_n_relay), 
-                clab::iot_services::io_buffer_report_size
+                clab::iot_services::io_buffer_report_size,
+                256
         };
 
         
@@ -75,6 +78,8 @@ namespace clab::iot_services {
             memset(&ports, 0, ports.size());
         }
 
+        //TODO: restore control_rules related variables here (and save them if clean_restart)
+
         // control rules
         for (int k = 0; k < control_rules.size(); k++) {
             char key_buf[8];
@@ -88,6 +93,7 @@ namespace clab::iot_services {
                 if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
                     prop_value_buffer[out_size] = '\0';
                     if (control_rules[k].parse_from((char *)prop_value_buffer) != ESP_OK) {
+                        ESP_LOGE(TAG, "Deserialization error! Ignoring...");
                         memset(&(control_rules[k]), 0, sizeof(clab::iot_services::combined_rule_t<4, 14>));
                     }
                 }
@@ -279,6 +285,7 @@ namespace clab::iot_services {
     void ctrl_copy_des_status(des_status_t &from, des_status_t &to) {
         to.latch_mask = from.latch_mask;
         to.relay_mask = from.relay_mask;
+        // to.led_mask = from.led_mask;
     }
 
     esp_err_t ctrl_rules_eval(const char *sender, const uint8_t *payload, size_t payload_size) {
@@ -302,6 +309,7 @@ namespace clab::iot_services {
                 if (inner.op == clab::iot_services::unary_op_t::NOPE) {
                     ESP_LOGI(TAG, "Rule[%d, %d] is empty! ...so is good!", rule_idx, inner_idx);
                     control_inner_eval[rule_idx * control_rules[rule_idx].n_rules() + inner_idx] = true;
+                    control_inner_last_measure[rule_idx * control_rules[rule_idx].n_rules() + inner_idx] = NAN;
                     continue;
                 }
 
@@ -320,6 +328,15 @@ namespace clab::iot_services {
                     }
                     else if (inner.port.type == clab::iot_services::port_type_t::DIGITAL) {
                         measure = received_status.digital_status(inner.port.index) ? 1 : 0;
+                    }
+                    else if (inner.port.type == clab::iot_services::port_type_t::PULSE) {
+                        if (inner.port.index > received_status.n_pulse()) {
+                            ESP_LOGE(TAG, "Rule<%d> is malformed! Requested P[%d, %s] (max: P[%d])", rule_idx, inner.port.index, inner.target, received_status.n_pulse());
+                            to_ret = ESP_ERR_INVALID_STATE;
+                        }
+                        else {
+                            measure = received_status.pulse_value(inner.port.index);
+                        }
                     }
                     else if (inner.port.type == clab::iot_services::port_type_t::CURRENT) {
                         if (inner.port.index > received_status.n_curr()) {
@@ -351,8 +368,8 @@ namespace clab::iot_services {
 
                     ESP_LOGI(TAG, "Rule[%d, %d] measure: %f", rule_idx, inner_idx, measure);
 
-
                     if (!std::isnan(measure)) {
+
                         if (inner.op == clab::iot_services::unary_op_t::EQ) {
                             control_inner_eval[rule_idx * control_rules[rule_idx].n_rules() + inner_idx]  = (measure == inner.value);
                         }
@@ -371,9 +388,17 @@ namespace clab::iot_services {
                         else if (inner.op == clab::iot_services::unary_op_t::LTE) {
                             control_inner_eval[rule_idx * control_rules[rule_idx].n_rules() + inner_idx]  = (measure <= inner.value);
                         }
+                        else if (inner.op == clab::iot_services::unary_op_t::CHANGE) {
+                            auto last_measure = control_inner_last_measure[rule_idx * control_rules[rule_idx].n_rules() + inner_idx];
+                            if (!std::isnan(last_measure)) {
+                                control_inner_eval[rule_idx * control_rules[rule_idx].n_rules() + inner_idx]  = (std::abs(measure - last_measure) >= inner.value);
+                            }
+                        }
                     }
 
                     ESP_LOGI(TAG, "Rule[%d, %d] evaluated: %d", rule_idx, inner_idx, control_inner_eval[rule_idx * control_rules[rule_idx].n_rules() + inner_idx] ? 1 : 0);
+
+                    control_inner_last_measure[rule_idx * control_rules[rule_idx].n_rules() + inner_idx] = measure;
 
                 }
             }
@@ -397,12 +422,12 @@ namespace clab::iot_services {
                     ESP_LOGI(TAG, "Rule<%d> active! L[%d] desired on!", rule_idx, control_rules[rule_idx].action.index);
                 }
             }
-            else if (control_rules[rule_idx].action.type == clab::iot_services::port_type_t::LED) {
-                rules_action.led_status(control_rules[rule_idx].action.index, active);
-                if (active) {
-                    ESP_LOGI(TAG, "Rule<%d> active! Led[%d] desired on!", rule_idx, control_rules[rule_idx].action.index);
-                }
-            }
+            // else if (control_rules[rule_idx].action.type == clab::iot_services::port_type_t::LED) {
+            //     rules_action.led_status(control_rules[rule_idx].action.index, active);
+            //     if (active) {
+            //         ESP_LOGI(TAG, "Rule<%d> active! Led[%d] desired on!", rule_idx, control_rules[rule_idx].action.index);
+            //     }
+            // }
         }
         xSemaphoreGive(ctrl_mutex);
 
@@ -420,7 +445,7 @@ namespace clab::iot_services {
         // merge rule override
         desired.latch_mask  |= rules_action.latch_mask;
         desired.relay_mask  |= rules_action.relay_mask;
-        desired.led_mask    |= rules_action.led_mask;
+        // desired.led_mask    |= rules_action.led_mask;
 
         //TODO: can add device program here!
         

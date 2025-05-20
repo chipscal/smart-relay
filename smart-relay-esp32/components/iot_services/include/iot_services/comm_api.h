@@ -14,7 +14,7 @@ namespace clab::iot_services
         EMPTY       = 0x0,
         RELAY       = 'r',
         LATCH       = 'l',
-        LED         = 'e',
+        // LED         = 'e',
         CURRENT     = 'c',
         VOLTAGE     = 'v',
         PULSE       = 'p',
@@ -142,7 +142,8 @@ namespace clab::iot_services
         GT          = '>',
         GTE         = 'g',
         LT          = '<',
-        LTE         = 'l'
+        LTE         = 'l',
+        CHANGE      = '?'
     };
 
     /// @brief Unary rule definition.
@@ -428,7 +429,7 @@ namespace clab::iot_services
 
         /// @brief Voltage input value.
         /// @param idx of the input
-        /// @return mV
+        /// @return V
         inline float       voltage_value(int idx) {
             const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + idx);
 
@@ -437,7 +438,7 @@ namespace clab::iot_services
             if (!is_little_endian())
                 value = swap_uint16(value);
 
-            return static_cast<float>(value);
+            return static_cast<float>(value) / 1000;
         }
 
         /// @brief Pulse input value.
@@ -476,8 +477,8 @@ namespace clab::iot_services
         uint32_t    latch_mask;
         /// @brief Relay port status - (1 << idx) => means Relay[idx] should be enabled.
         uint32_t    relay_mask;
-        /// @brief Led channel status - (1 << idx) => means Led[idx] control should be enabled.
-        uint8_t     led_mask;
+        // /// @brief Led channel status - (1 << idx) => means Led[idx] control should be enabled.
+        // uint8_t     led_mask;
 
         inline bool latch_status(int idx) {
             return ((latch_mask & (1 << idx)) > 0);
@@ -501,15 +502,15 @@ namespace clab::iot_services
                 relay_mask &= ~(1 << idx);
         }
 
-        inline bool led_status(int idx) {
-            return ((led_mask & (1 << idx)) > 0);
-        }
+        // inline bool led_status(int idx) {
+        //     return ((led_mask & (1 << idx)) > 0);
+        // }
 
-        inline void led_status(int idx, bool status) {
-            if (status)
-                led_mask |= (1 << idx);
-            else
-                led_mask &= ~(1 << idx);
-        }
+        // inline void led_status(int idx, bool status) {
+        //     if (status)
+        //         led_mask |= (1 << idx);
+        //     else
+        //         led_mask &= ~(1 << idx);
+        // }
     };
 }
