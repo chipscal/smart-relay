@@ -14,10 +14,12 @@ namespace clab::iot_services
         EMPTY       = 0x0,
         RELAY       = 'r',
         LATCH       = 'l',
+        LED         = 'e',
         CURRENT     = 'c',
         VOLTAGE     = 'v',
         PULSE       = 'p',
-        DIGITAL     = 'd'
+        DIGITAL     = 'd',
+        TEMPERATURE = 't'
     };
 
     /// @brief Port definition.
@@ -151,6 +153,11 @@ namespace clab::iot_services
         float           value;
         char            target[T + 1];
 
+
+        constexpr size_t target_size() {
+            return T + 1;
+        }
+
         /// @brief Initialize empty.
         unary_rule_t() {
             memset(this, 0, sizeof(unary_rule_t));
@@ -208,6 +215,10 @@ namespace clab::iot_services
         combined_rule_t() {
             memset(this, 0, sizeof(combined_rule_t));
         };
+
+        constexpr size_t n_rules() {
+            return N;
+        }
 
         /// @brief Initializates from string.
         /// @param crule "{<unary_rule(0)>;<unary_rule(1)>;...<unary_rule(N-1)>}<port_type><port_index>" 
@@ -303,15 +314,15 @@ namespace clab::iot_services
     /// @brief Device status rapresentation.
     struct dev_status_t {
 
-        uint8_t     *_data_buffer;
+        const uint8_t       *_data_buffer;
 
-        size_t      _data_size;
+        size_t              _data_size;
 
         /// @brief Set internal buffer handlers.
         /// @param buffer from where to get status
         /// @param buffer_size of the status buffer
         /// @note No copy is made.
-        dev_status_t(uint8_t *buffer, size_t buffer_size);
+        dev_status_t(const uint8_t *buffer, size_t buffer_size);
 
         // HREV|SREV|n_curr[0:3],n_volt[4:7]|n_pulse[0:3],n_temperature[4:7]|
         // Latch0|Latch1|Latch2|Latch3|Relay0|Relay1|Relay2|Relay3 (bit mask)
@@ -320,6 +331,17 @@ namespace clab::iot_services
         // Voltage0_LSB|Voltage0_MSB|...|VoltageN_LSB|VoltageN_MSB
         // Pulse0_LSB|Pulse0_MSB|...|PulseN_LSB|PulseN_MSB
         // Temperature0_LSB|Temperature0_MSB|...|TemperatureN_LSB|TemperatureN_MSB
+
+        inline bool        is_valid() {
+            if (_data_size < 16) //HREV to Digital3
+                return false;
+
+            // Now size functions are safe!
+            if (_data_size < 16 + (n_curr() + n_volt() + n_pulse() + n_temperature()) * sizeof(uint16_t))
+                return false;
+
+            return true;
+        }
 
         /// @brief Hardware revision.
         inline uint8_t     hrev() {
@@ -394,7 +416,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return mA
         inline float       current_value(int idx) {
-            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * idx;
+            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * idx;
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -408,7 +430,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return mV
         inline float       voltage_value(int idx) {
-            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + idx);
+            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -422,7 +444,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return pulse count
         inline uint16_t    pulse_value(int idx) {
-            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + idx);
+            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -436,7 +458,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return K
         inline float       temperature_value(int idx) {
-            uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + n_pulse() + idx);
+            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + n_pulse() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));

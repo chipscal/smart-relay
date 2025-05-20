@@ -21,6 +21,7 @@
 #include "iot_services/ctrl_service.h"
 #include "iot_services/board.h"
 #include "plugin/comm.h"
+#include <cmath>
 
 static const char *TAG = "plugins::control";
 
@@ -40,16 +41,17 @@ namespace clab::plugins {
 
     clab::iot_services::des_status_t                                       overrides;
 
+    
     clab::iot_services::des_status_t                                       latest_o;
-
+    
     SemaphoreHandle_t                                                      control_mutex = NULL;
-
-
+    
+    
     static void on_property_update(const char *topic, const char *payload, size_t payload_size);
     static void on_cmd_received(const char *topic, const char *payload, size_t payload_size);
     static void on_telem_received(const char *topic, const char *payload, size_t payload_size);
     
-    std::array<clab::iot_services::combined_rule_t<4, 16>, 8>              control_rules;
+    
 
 
     void control_task(void *params) {
@@ -76,17 +78,18 @@ namespace clab::plugins {
             result = clab::iot_services::io_buffer_report(buffer, sizeof(buffer), true);
             if (result != ESP_OK) {
                 ESP_LOGE(TAG, "Error during full status report!");
-                //TODO: che fare?
+                //TODO: what to do?
             }
 
 
             clab::iot_services::des_status_t tmp_latest_o;
             clab::iot_services::ctrl_copy_des_status(latest_o, tmp_latest_o);
 
+
             result = clab::iot_services::ctrl_loop(actual_ts, actual_status, overrides, &tmp_latest_o);
             if (result != ESP_OK) {
                 ESP_LOGE(TAG, "Error during ctrl loop!");
-                //TODO: che fare?
+                //TODO: what to do?
             }
 
             if (control_task_loop_cnt - control_latest_telem_loop_cnt > CONFIG_CONTROL_SEND_STATUS_MAX_EVERY_LOOPS &&
@@ -175,24 +178,6 @@ namespace clab::plugins {
 
             clab::iot_services::sprint_uint32_binary((char *)buffer, overrides.relay_mask);
             ESP_LOGI(TAG, "Relay override: %s", buffer);
-        }
-
-        for (int k = 0; k < control_rules.size(); k++) {
-            char key_buf[8];
-            snprintf(key_buf, 8, "rule%d", k);
-
-            control_rules[k] = clab::iot_services::combined_rule_t<4, 16>();
-           
-            if (clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
-                ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
-
-                if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
-                    prop_value_buffer[out_size] = '\0';
-                    if (control_rules[k].parse_from((char *)prop_value_buffer) != ESP_OK) {
-                        memset(&(control_rules[k]), 0, sizeof(clab::iot_services::combined_rule_t<4, 16>));
-                    }
-                }
-            }
         }
 
         control_task_loop_cnt = 0;
@@ -327,11 +312,17 @@ namespace clab::plugins {
             auto suffix = alias_string.substr(4);
             auto idx = static_cast<uint8_t>(std::stod(suffix));
 
-            xSemaphoreTake(control_mutex, portMAX_DELAY);
-            if (control_rules[idx].parse_from((char *)decoded_buffer) == ESP_OK) {
+            clab::iot_services::combined_rule_t<4, 14> received_rule;
+            
+            if (received_rule.parse_from((char *)decoded_buffer) == ESP_OK) {
+
+                esp_err_t result = clab::iot_services::ctrl_rule_set(idx, received_rule);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Unable to set rule!");
+                    return;
+                }
                 prop_is_ok = true;
             }
-            xSemaphoreGive(control_mutex);
 
         }
 
@@ -452,8 +443,25 @@ namespace clab::plugins {
     }
 
     static void on_telem_received(const char *topic, const char *payload, size_t payload_size) {
+        uint8_t decoded_buffer[256];
+        size_t  decoded_size;
+        
         ESP_LOGI(TAG, "Message: %.*s", payload_size, payload);
 
-        //TODO: rule check here and override management!
+        auto sender = extract_from_topic(topic, 2);
+        ESP_LOGI(TAG, "Received telemetry from: %s", sender.c_str());
+        
+        if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                (const unsigned char *)payload, payload_size) != 0) {
+            ESP_LOGE(TAG, "Malformed or too big message!");
+            return;
+        }
+
+        esp_err_t result = clab::iot_services::ctrl_rules_eval(sender.c_str(), decoded_buffer, decoded_size);
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to evaluate rules using provided payload!");
+            return;
+        }
+
     }
 }

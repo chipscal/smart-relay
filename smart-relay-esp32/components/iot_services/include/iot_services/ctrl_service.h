@@ -23,6 +23,24 @@ namespace clab::iot_services {
     /// @note this function is thread safe.
     esp_err_t        ctrl_set_ports(ports_conf_t<io_n_latch, io_n_relay> &port_conf);
 
+
+    /// @brief Copies rule configuration to given idx slot
+    /// @param idx of the rule
+    /// @param rule from where to copy
+    /// @return ESP_OK on success
+    /// @note this function is thread safe.
+    esp_err_t        ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t<4, 14> &rule);
+
+    /// @brief Evaluates rules using provided payload
+    /// @param sender of the device status
+    /// @param payload device status payload
+    /// @param payload_size size of the payload
+    /// @return ESP_OK on success.
+    /// @note this function is thread safe.
+    /// @note If a rule uses multiple targets last received status from such targets is used.
+    /// @note This function does not store device statuses internally - no need!
+    esp_err_t ctrl_rules_eval(const char *sender, const uint8_t *payload, size_t payload_size);
+
     /// @brief Executes control loop logic.
     /// @param actual_ts actual timestamp 
     /// @param status device status report
