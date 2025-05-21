@@ -29,10 +29,12 @@ namespace clab::iot_services {
     std::array<bool, 32>                                relay_logic_status;
 
 
-    clab::iot_services::des_status_t                                       rules_action;
-    std::array<clab::iot_services::combined_rule_t<4, 14>, 8>              control_rules;
-    std::array<bool, 4 * 8>                                                control_inner_eval;
-    std::array<float, 4 * 8>                                               control_inner_last_measure;
+    clab::iot_services::des_status_t                                    rules_action;
+    std::array<clab::iot_services::combined_rule_t
+            <CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE>, CONFIG_IOT_CRULE_MAX>              
+                                                                        control_rules;
+    std::array<bool, CONFIG_IOT_CRULE_SIZE * CONFIG_IOT_CRULE_MAX>      control_inner_eval;
+    std::array<float, CONFIG_IOT_CRULE_SIZE * CONFIG_IOT_CRULE_MAX>     control_inner_last_measure;
 
 
     SemaphoreHandle_t               ctrl_mutex = NULL;
@@ -49,6 +51,8 @@ namespace clab::iot_services {
             ctrl_mutex = xSemaphoreCreateMutex(); //In tests may have been already allocated
             ESP_LOGI(TAG, "Control service mutex created...");
         }
+
+        esp_err_t result;
 
         uint8_t buffer[256];
         size_t  out_size = 0;
@@ -80,21 +84,46 @@ namespace clab::iot_services {
 
         //TODO: restore control_rules related variables here (and save them if clean_restart)
 
+        // --------------------- control rules:
+        memset(&rules_action, 0, sizeof(clab::iot_services::des_status_t));
+        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_action", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"last_r_action\":%.*s (%d bytes)", out_size, buffer, out_size);
+
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                
+                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
+                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+
+                if (prop_size != sizeof(clab::iot_services::des_status_t)) {
+                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                }
+                else {
+                    memcpy(&rules_action, prop_value_buffer, prop_size);
+                }
+            } 
+
+        }
+        // cleaning up
+        result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_action");
+        if (result == ESP_OK) {
+            ESP_LOGW(TAG, "Unable to remove <<<last_r_action>>>!");
+        }
+
         // control rules
         for (int k = 0; k < control_rules.size(); k++) {
             char key_buf[8];
             snprintf(key_buf, 8, "rule%d", k);
 
-            control_rules[k] = clab::iot_services::combined_rule_t<4, 14>();
+            control_rules[k] = clab::iot_services::combined_rule_t<CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE>();
            
-            if (clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            if (init_from_storage && clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
                 ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
 
                 if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
                     prop_value_buffer[out_size] = '\0';
                     if (control_rules[k].parse_from((char *)prop_value_buffer) != ESP_OK) {
                         ESP_LOGE(TAG, "Deserialization error! Ignoring...");
-                        memset(&(control_rules[k]), 0, sizeof(clab::iot_services::combined_rule_t<4, 14>));
+                        memset(&(control_rules[k]), 0, sizeof(clab::iot_services::combined_rule_t<CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE>));
                     }
                 }
             }
@@ -139,7 +168,7 @@ namespace clab::iot_services {
         return ESP_OK;
     }
 
-    esp_err_t ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t<4, 14> &rule){
+    esp_err_t ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t<CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE> &rule){
         if (idx > control_rules.size()) {
             ESP_LOGE(TAG, "Rule[%d] outside of bounds, ignoring...", idx);
             return ESP_FAIL;

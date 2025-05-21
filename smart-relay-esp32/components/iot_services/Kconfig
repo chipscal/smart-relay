@@ -21,6 +21,23 @@ menu "IoT Service"
         help 
             Board revision is used to select proper board pinout
 
+    config IOT_CRULE_SIZE
+        int "Combined rule size"
+        default 4
+        help 
+            Number of inner rules inside a combined rule
+
+    config IOT_CRULE_MAX
+        int "Max combined rules"
+        default 8
+        help 
+            Number of maximum combined rules the device supports
+
+    config IOT_DEVICEUID_MAX_SIZE
+        int "Max length of the DeviceUID"
+        default 14
+        help 
+            Maximum ammissible size of the DeviceUIDs in the network
 
     config IOT_IO_STORAGE_NAMESPACE
         string "Storage namespace used from IoT services"

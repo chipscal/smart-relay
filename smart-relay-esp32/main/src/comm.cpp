@@ -33,7 +33,7 @@ namespace clab::plugins {
 
     std::unordered_map<std::string, comm_message_callback_t>  comm_callbacks;
 
-    char                                comm_device_address[16] = "R1XXXXXXXXXXXX";
+    char                                comm_device_address[CONFIG_IOT_DEVICEUID_MAX_SIZE + 1] = "R1XXXXXXXXXXXX";
 
     void comm_mqtt_broker_task(void *params) {
         

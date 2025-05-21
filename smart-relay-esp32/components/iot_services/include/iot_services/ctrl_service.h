@@ -29,7 +29,8 @@ namespace clab::iot_services {
     /// @param rule from where to copy
     /// @return ESP_OK on success
     /// @note this function is thread safe.
-    esp_err_t        ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t<4, 14> &rule);
+    esp_err_t        ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t
+            <CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE> &rule);
 
     /// @brief Evaluates rules using provided payload
     /// @param sender of the device status
