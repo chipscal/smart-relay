@@ -54,4 +54,10 @@ namespace clab::iot_services {
     esp_err_t        ctrl_loop(uint32_t actual_ts, dev_status_t &status, des_status_t &overrides, 
             des_status_t *out_logic = NULL, bool output_enabled = true);
 
+    
+    /// @brief Saves current control status onto the flash.
+    /// @return ESP_OK on success.
+    /// @note call this function just before restart.
+    /// @note this function is NOT thread safe and must me called only one time before restart!
+    esp_err_t       ctrl_save_status();
 }

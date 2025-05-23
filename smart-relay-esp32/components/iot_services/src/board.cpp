@@ -3,6 +3,7 @@
 #include "iot_services/storage_service.h"
 #include "iot_services/io_service.h"
 #include "iot_services/rtc_service.h"
+#include "iot_services/ctrl_service.h"
 
 #include "esp_log.h"
 
@@ -30,6 +31,11 @@ namespace clab::iot_services {
         result = storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_rtc", (char *)(&last_rtc), sizeof(uint32_t));
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "Unable to save rtc!");
+        }
+
+        result = ctrl_save_status();
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save control status!");
         }
 
         ESP_LOGI(TAG, "Collecting status completed! Abort()...");

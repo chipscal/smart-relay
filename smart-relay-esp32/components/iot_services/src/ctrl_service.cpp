@@ -82,9 +82,7 @@ namespace clab::iot_services {
             memset(&ports, 0, ports.size());
         }
 
-        //TODO: restore control_rules related variables here (and save them if clean_restart)
-
-        // --------------------- control rules:
+        // --------------------- rule action:
         memset(&rules_action, 0, sizeof(clab::iot_services::des_status_t));
         if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_action", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
             ESP_LOGI(TAG, "Founded setting \"last_r_action\":%.*s (%d bytes)", out_size, buffer, out_size);
@@ -105,11 +103,11 @@ namespace clab::iot_services {
         }
         // cleaning up
         result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_action");
-        if (result == ESP_OK) {
+        if (result != ESP_OK) {
             ESP_LOGW(TAG, "Unable to remove <<<last_r_action>>>!");
         }
 
-        // control rules
+        // --------------------- control_rules:
         for (int k = 0; k < control_rules.size(); k++) {
             char key_buf[8];
             snprintf(key_buf, 8, "rule%d", k);
@@ -129,11 +127,107 @@ namespace clab::iot_services {
             }
         }
 
+        // --------------------- control_inner_eval:
+        memset(&control_inner_eval, 0, control_inner_eval.size());
+        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_eval", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"last_r_eval\":%.*s (%d bytes)", out_size, buffer, out_size);
+
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                
+                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
+                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+
+                if (prop_size != control_inner_eval.size()) {
+                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                }
+                else {
+                    memcpy(&control_inner_eval, prop_value_buffer, prop_size);
+                }
+            } 
+
+        }
+        // cleaning up
+        result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_eval");
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG, "Unable to remove <<<last_r_eval>>>!");
+        }
+
+        // --------------------- control_inner_last_measure:
+        memset(&control_inner_last_measure, 0, control_inner_last_measure.size());
+        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_measure", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"last_r_measure\":%.*s (%d bytes)", out_size, buffer, out_size);
+
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                
+                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
+                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+
+                if (prop_size != control_inner_last_measure.size()) {
+                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                }
+                else {
+                    memcpy(&control_inner_last_measure, prop_value_buffer, prop_size);
+                }
+            } 
+
+        }
+        // cleaning up
+        result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_measure");
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG, "Unable to remove <<<last_r_measure>>>!");
+        }
+
+        // --------------------- latch_logic_status:
         for (int k = 0; k < latch_logic_status.size(); k++)
             latch_logic_status[k] = false;
 
+        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_l_status", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"last_l_status\":%.*s (%d bytes)", out_size, buffer, out_size);
+
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                
+                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
+                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+
+                if (prop_size != latch_logic_status.size()) {
+                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                }
+                else {
+                    memcpy(&latch_logic_status, prop_value_buffer, prop_size);
+                }
+            } 
+        }
+        // cleaning up
+        result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_l_status");
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG, "Unable to remove <<<last_l_status>>>!");
+        }
+        
+        // --------------------- relay_logic_status:
         for (int k = 0; k < relay_logic_status.size(); k++)
             relay_logic_status[k] = false;
+
+        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_status", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+            ESP_LOGI(TAG, "Founded setting \"last_r_status\":%.*s (%d bytes)", out_size, buffer, out_size);
+
+            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                
+                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
+                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+
+                if (prop_size != relay_logic_status.size()) {
+                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                }
+                else {
+                    memcpy(&relay_logic_status, prop_value_buffer, prop_size);
+                }
+            } 
+        }
+        // cleaning up
+        result = storage_db_remove(CONFIG_IOT_IO_STORAGE_NAMESPACE, "last_r_status");
+        if (result != ESP_OK) {
+            ESP_LOGW(TAG, "Unable to remove <<<last_r_status>>>!");
+        }
 
         ESP_LOGI(TAG, "Port configuration... Ok...");
 
@@ -489,6 +583,90 @@ namespace clab::iot_services {
         xSemaphoreGive(ctrl_mutex);
 
         return result;
+    }
+
+    esp_err_t ctrl_save_status() {
+
+        char        encoded_buffer[256];
+        size_t      encoded_size;
+        esp_err_t   result;
+
+        // --------------------- rule action:
+        if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                &encoded_size, (const unsigned char *)&rules_action, sizeof(clab::iot_services::des_status_t)) < 0) {
+            ESP_LOGE(TAG, "Unable to byte64 encode rules_action, too big!");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Saving <last_r_action>: %.*s, (%d bytes)", encoded_size, encoded_buffer, encoded_size);
+        result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                "last_r_action", encoded_buffer, encoded_size); 
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save property!");
+            return ESP_FAIL;
+        }
+
+        // --------------------- control_inner_eval:
+        if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                &encoded_size, (const unsigned char *)&control_inner_eval, control_inner_eval.size()) < 0) {
+            ESP_LOGE(TAG, "Unable to byte64 encode last_r_eval, too big!");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Saving <last_r_eval>: %.*s, (%d bytes)", encoded_size, encoded_buffer, encoded_size);
+        result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                "last_r_eval", encoded_buffer, encoded_size); 
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save property!");
+            return ESP_FAIL;
+        }
+
+        // --------------------- control_inner_last_measure:
+        if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                &encoded_size, (const unsigned char *)&control_inner_last_measure, control_inner_last_measure.size()) < 0) {
+            ESP_LOGE(TAG, "Unable to byte64 encode last_r_measure, too big!");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Saving <last_r_measure>: %.*s, (%d bytes)", encoded_size, encoded_buffer, encoded_size);
+        result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                "last_r_measure", encoded_buffer, encoded_size); 
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save property!");
+            return ESP_FAIL;
+        }
+
+        // --------------------- latch_logic_status:
+        if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                &encoded_size, (const unsigned char *)&latch_logic_status, latch_logic_status.size()) < 0) {
+            ESP_LOGE(TAG, "Unable to byte64 encode last_l_status, too big!");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Saving <last_l_status>: %.*s, (%d bytes)", encoded_size, encoded_buffer, encoded_size);
+        result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                "last_l_status", encoded_buffer, encoded_size); 
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save property!");
+            return ESP_FAIL;
+        }
+
+        // --------------------- relay_logic_status:
+        if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
+                &encoded_size, (const unsigned char *)&relay_logic_status, relay_logic_status.size()) < 0) {
+            ESP_LOGE(TAG, "Unable to byte64 encode last_r_status, too big!");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Saving <last_r_status>: %.*s, (%d bytes)", encoded_size, encoded_buffer, encoded_size);
+        result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                "last_r_status", encoded_buffer, encoded_size); 
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to save property!");
+            return ESP_FAIL;
+        }
+
+        return ESP_OK;
     }
 
 }
