@@ -999,7 +999,6 @@ namespace clab::iot_services {
 
                 vTaskDelay(pdMS_TO_TICKS(__LM75D_WAIT_MEASURE_MILLIS));
 
-                //todo
                 uint8_t buffer[2];
                 result = i2c_bus_register_read(temp_in[input], 
                         __LM75D_TEMP_REGISTER, buffer, sizeof(buffer), __LM75D_DEFAULT_TIMEOUT);

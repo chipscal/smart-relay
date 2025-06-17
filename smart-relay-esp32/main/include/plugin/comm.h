@@ -40,6 +40,10 @@ namespace clab::plugins {
     /// @return ESP_OK on success.
     esp_err_t comm_sub_message(const char *topic, comm_message_callback_t callback);
 
+    /// @brief Starts accepting discovery requests.
+    /// @return ESP_OK on success
+    esp_err_t comm_discovery_server_start();
+
     /// @brief Get the id of the DEVEUID of Modem.
     /// @return String i.e the DEVEUI.
     const char *comm_get_device_uid();

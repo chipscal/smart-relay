@@ -88,9 +88,13 @@ extern "C" void app_main(void)
     //-------------------------------------- TODO: others plugin goes here:
     ESP_ERROR_CHECK(clab::plugins::comm_plugin());
 
+    
     bool is_local_broker = false;
     #if CONFIG_MAIN_MQTT_BROKER_DIN_CONF_CHANNEL != UINT8_MAX
-        if (clab::iot_services::io_digital_input_status(CONFIG_MAIN_MQTT_BROKER_DIN_CONF_CHANNEL)) {
+    if (clab::iot_services::io_digital_input_status(CONFIG_MAIN_MQTT_BROKER_DIN_CONF_CHANNEL)) {
+            
+            ESP_ERROR_CHECK(clab::plugins::comm_discovery_server_start());
+            
             ESP_ERROR_CHECK(clab::plugins::comm_mqtt_broker_start());
             vTaskDelay(pdMS_TO_TICKS(10000));
             is_local_broker = true;

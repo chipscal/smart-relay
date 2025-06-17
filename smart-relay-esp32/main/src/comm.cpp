@@ -23,6 +23,11 @@
 #include "mosq_broker_c_api.h"
 #include "mqtt_client.h"
 
+#include "lwip/err.h"
+#include "lwip/sockets.h"
+#include "lwip/sys.h"
+#include <lwip/netdb.h>
+
 static const char *TAG = "plugins::comm";
 
 namespace clab::plugins {
@@ -34,6 +39,9 @@ namespace clab::plugins {
     std::unordered_map<std::string, comm_message_callback_t>  comm_callbacks;
 
     char                                comm_device_address[CONFIG_IOT_DEVICEUID_MAX_SIZE + 1] = "R1XXXXXXXXXXXX";
+
+    TaskHandle_t                        comm_discovery_server_task_handle = NULL;
+
 
     void comm_mqtt_broker_task(void *params) {
         
@@ -61,6 +69,7 @@ namespace clab::plugins {
             ESP_LOGE(TAG, "Unable to get wifi mac!");
             return result;
         }
+
 
         clab::iot_services::sprint_array_hex(comm_device_address + 2, mac, 6);
 
@@ -242,6 +251,149 @@ namespace clab::plugins {
         }
 
         return ESP_ERR_NOT_ALLOWED;
+    }
+
+    static void discovery_server_task(void *params) {
+        char rx_buffer[128];
+        char addr_str[128];
+        int addr_family = AF_INET;
+        int port = 46789;
+
+
+        while (1) {
+            struct sockaddr_in dest_addr_ip4;
+            dest_addr_ip4.sin_addr.s_addr = htonl(INADDR_ANY);
+            dest_addr_ip4.sin_family = AF_INET;
+            dest_addr_ip4.sin_port = htons(port);
+    
+            int sock = socket(addr_family, SOCK_DGRAM, IPPROTO_UDP);
+            if (sock < 0) {
+                ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            }
+            ESP_LOGI(TAG, "Socket created");
+    
+            #if defined(CONFIG_LWIP_NETBUF_RECVINFO)
+                int enable = 1;
+                lwip_setsockopt(sock, IPPROTO_IP, IP_PKTINFO, &enable, sizeof(enable));
+            #endif
+    
+            // set timeout
+            struct timeval timeout;
+            timeout.tv_sec = 60 * 10;
+            timeout.tv_usec = 0;
+            setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+            
+            // set broadcast
+            int bc = 1;
+            if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &bc, sizeof(bc)) < 0) {
+                ESP_LOGE(TAG, "Failed to set sock options: errno %d", errno);
+                closesocket(sock);
+                break;
+            }
+    
+            int err = bind(sock, (struct sockaddr *)&dest_addr_ip4, sizeof(dest_addr_ip4));
+            if (err < 0) {
+                ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+                break;
+            }
+            ESP_LOGI(TAG, "Socket bound, port %d", port);
+    
+            struct sockaddr_storage source_addr; // Large enough for both IPv4 or IPv6
+            socklen_t socklen = sizeof(source_addr);
+    
+            #if defined(CONFIG_LWIP_NETBUF_RECVINFO) 
+                struct iovec iov;
+                struct msghdr msg;
+                struct cmsghdr *cmsgtmp;
+                u8_t cmsg_buf[CMSG_SPACE(sizeof(struct in_pktinfo))];
+    
+                iov.iov_base = rx_buffer;
+                iov.iov_len = sizeof(rx_buffer);
+                msg.msg_control = cmsg_buf;
+                msg.msg_controllen = sizeof(cmsg_buf);
+                msg.msg_flags = 0;
+                msg.msg_iov = &iov;
+                msg.msg_iovlen = 1;
+                msg.msg_name = (struct sockaddr *)&source_addr;
+                msg.msg_namelen = socklen;
+            #endif
+
+
+            while (1) {
+                ESP_LOGI(TAG, "Waiting for data");
+                #if defined(CONFIG_LWIP_NETBUF_RECVINFO)
+                    int len = recvmsg(sock, &msg, 0);
+                #else
+                    int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+                #endif
+                if (len < 0) {
+                    ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+                    break;
+                }
+                // Data received
+                else {
+                    // Get the sender's ip address as string
+                    if (source_addr.ss_family == PF_INET) {
+                        inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr, addr_str, sizeof(addr_str) - 1);
+                        #if defined(CONFIG_LWIP_NETBUF_RECVINFO)
+                            for ( cmsgtmp = CMSG_FIRSTHDR(&msg); cmsgtmp != NULL; cmsgtmp = CMSG_NXTHDR(&msg, cmsgtmp) ) {
+                                if ( cmsgtmp->cmsg_level == IPPROTO_IP && cmsgtmp->cmsg_type == IP_PKTINFO ) {
+                                    struct in_pktinfo *pktinfo;
+                                    pktinfo = (struct in_pktinfo*)CMSG_DATA(cmsgtmp);
+                                    ESP_LOGI(TAG, "dest ip: %s", inet_ntoa(pktinfo->ipi_addr));
+                                }
+                            }
+                        #endif
+                    } else if (source_addr.ss_family == PF_INET6) {
+                        inet6_ntoa_r(((struct sockaddr_in6 *)&source_addr)->sin6_addr, addr_str, sizeof(addr_str) - 1);
+                    }
+
+                    rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string...
+                    ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
+                    ESP_LOGI(TAG, "%s", rx_buffer);
+
+
+                    if (strcmp(rx_buffer, "HELLO!") == 0) {
+
+                        uint32_t address;
+                        esp_err_t result = clab::iot_services::wifi_get_ip(&address);
+                        if (result != ESP_OK) {
+                            ESP_LOGE(TAG, "Error occurred during ip get");
+                            break;
+                        }
+                        
+                        len = sprintf(rx_buffer, "HELLO!\n%s\n%d.%d.%d.%d\n%d\n", comm_device_address, ((uint8_t *)&address)[0], ((uint8_t *)&address)[1]
+                            ,((uint8_t *)&address)[2], ((uint8_t *)&address)[3], CONFIG_MAIN_MQTT_BROKER_LISTEN_PORT);
+    
+    
+                        int err = sendto(sock, rx_buffer, len, 0, (struct sockaddr *)&source_addr, sizeof(source_addr));
+                        if (err < 0) {
+                            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                            break;
+                        }
+                    } 
+                }
+            }
+
+            if (sock != -1) {
+                ESP_LOGE(TAG, "Shutting down socket and restarting...");
+                shutdown(sock, 0);
+                close(sock);
+            }
+        }
+        
+        vTaskDelete(comm_discovery_server_task_handle);
+    }
+
+    esp_err_t comm_discovery_server_start() {
+        auto task_result = xTaskCreate(discovery_server_task, "discovery_server", 4096, NULL, tskIDLE_PRIORITY, &comm_discovery_server_task_handle); 
+        if (task_result != pdPASS ) {
+            ESP_LOGE(TAG, "Error occurred during discovery task creation...");
+            return ESP_FAIL;
+        }
+        ESP_LOGI(TAG, "Discovery server task launched...");
+
+        return ESP_OK;
     }
 
 }

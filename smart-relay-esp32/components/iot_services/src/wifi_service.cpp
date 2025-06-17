@@ -270,4 +270,16 @@ namespace clab::iot_services {
 
         return ESP_OK;
     }
+
+    esp_err_t wifi_get_ip(uint32_t *address) {
+        esp_netif_ip_info_t info;
+        esp_err_t result = esp_netif_get_ip_info(wifi_netif_handler, &info);
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Unable to get IP address!");
+            return result;
+        }
+        
+        *address = info.ip.addr;
+        return ESP_OK;
+    }
 }
