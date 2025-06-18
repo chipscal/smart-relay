@@ -41,8 +41,15 @@ namespace clab::plugins {
     esp_err_t comm_sub_message(const char *topic, comm_message_callback_t callback);
 
     /// @brief Starts accepting discovery requests.
-    /// @return ESP_OK on success
+    /// @return ESP_OK on success.
     esp_err_t comm_discovery_server_start();
+
+    /// @brief Get server configuration from the network with a broadcast request.
+    /// @param[out] address_buffer where to store server IP,
+    /// @param[in] address_buffer_size size of the buffer,
+    /// @param[out] port where to store server port.
+    /// @return ESP_OK on success.
+    esp_err_t comm_discovery_request_server_info(char *address_buffer, size_t address_buffer_size, uint32_t *port);
 
     /// @brief Get the id of the DEVEUID of Modem.
     /// @return String i.e the DEVEUI.

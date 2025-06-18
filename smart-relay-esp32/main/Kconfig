@@ -73,6 +73,13 @@ menu "Main Service"
         help 
             If defined mqtt client connects to this URI.
 
+    config MAIN_DISCOVERY_SERVICE_PORT
+        int "Discovery service port"
+        default 46789
+        help 
+            Used to decice which port should be used from the discovery service.
+
+
     config CONTROL_LOOP_INTERVAL_MILLIS
         int "Control loop task interval (ms)"
         default 1000

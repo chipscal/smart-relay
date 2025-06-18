@@ -257,7 +257,7 @@ namespace clab::plugins {
         char rx_buffer[128];
         char addr_str[128];
         int addr_family = AF_INET;
-        int port = 46789;
+        uint16_t port = CONFIG_MAIN_DISCOVERY_SERVICE_PORT;
 
 
         while (1) {
@@ -266,7 +266,7 @@ namespace clab::plugins {
             dest_addr_ip4.sin_family = AF_INET;
             dest_addr_ip4.sin_port = htons(port);
     
-            int sock = socket(addr_family, SOCK_DGRAM, IPPROTO_UDP);
+            int sock = socket(addr_family, SOCK_DGRAM, IPPROTO_IP);
             if (sock < 0) {
                 ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
             }
@@ -281,13 +281,15 @@ namespace clab::plugins {
             struct timeval timeout;
             timeout.tv_sec = 60 * 10;
             timeout.tv_usec = 0;
-            setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+            if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+                ESP_LOGE(TAG, "Failed to set sock options: errno %d", errno);
+                break;
+            }
             
             // set broadcast
             int bc = 1;
             if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &bc, sizeof(bc)) < 0) {
                 ESP_LOGE(TAG, "Failed to set sock options: errno %d", errno);
-                closesocket(sock);
                 break;
             }
     
@@ -394,6 +396,100 @@ namespace clab::plugins {
         ESP_LOGI(TAG, "Discovery server task launched...");
 
         return ESP_OK;
+    }
+
+    constexpr std::size_t constexpr_strlen(std::string_view str) {
+        return str.size();
+    };
+
+    esp_err_t comm_discovery_request_server_info(char *address_buffer, size_t address_buffer_size, uint32_t *port) {
+        
+        constexpr const char *  ipv4_proto          { "XXX.XXX.XXX.XXX" };
+        constexpr size_t        ipv4_string_size    { constexpr_strlen(ipv4_proto) + 1};
+        
+        char rx_buffer[128];
+        int addr_family = AF_INET;
+
+        ESP_LOGI(TAG, "Starting discovery...");
+
+        if (address_buffer_size < ipv4_string_size) {
+            ESP_LOGE(TAG, "address_buffer too small!");
+            return ESP_ERR_INVALID_ARG;
+        }
+
+        uint32_t address, netmask;
+        esp_err_t result = clab::iot_services::wifi_get_ip(&address, &netmask);
+        if (result != ESP_OK) {
+            ESP_LOGE(TAG, "Error occurred during ip get");
+            return ESP_FAIL;
+        }
+
+        ESP_LOGI(TAG, "Found network configuration: IP:%d.%d.%d.%d, NETMASK:%d.%d.%d.%d", 
+                ((uint8_t *)&address)[0], ((uint8_t *)&address)[1],((uint8_t *)&address)[2], ((uint8_t *)&address)[3],
+                ((uint8_t *)&netmask)[0], ((uint8_t *)&netmask)[1],((uint8_t *)&netmask)[2], ((uint8_t *)&netmask)[3]);
+
+
+        uint32_t broadcast_address = address | (~netmask);
+        ESP_LOGI(TAG, "Using broadcast address -> IP:%d.%d.%d.%d", ((uint8_t *)&broadcast_address)[0], 
+                ((uint8_t *)&broadcast_address)[1],((uint8_t *)&broadcast_address)[2], ((uint8_t *)&broadcast_address)[3]);
+
+
+        struct sockaddr_in dest_addr_ip4;
+        dest_addr_ip4.sin_addr.s_addr = broadcast_address;
+        dest_addr_ip4.sin_family = AF_INET;
+        dest_addr_ip4.sin_port = htons(CONFIG_MAIN_DISCOVERY_SERVICE_PORT);
+
+        int sock = socket(addr_family, SOCK_DGRAM, IPPROTO_IP);
+        if (sock < 0) {
+            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            return ESP_FAIL;
+        }
+        ESP_LOGI(TAG, "Socket created");
+
+        // set timeout
+        struct timeval timeout;
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+            ESP_LOGE(TAG, "Failed to set sock options: errno %d", errno);
+            closesocket(sock);
+            return ESP_FAIL;
+        }
+        
+        // set broadcast
+        int bc = 1;
+        if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &bc, sizeof(bc)) < 0) {
+            ESP_LOGE(TAG, "Failed to set sock options: errno %d", errno);
+            closesocket(sock);
+            return ESP_FAIL;
+        }
+
+        int len = sprintf(rx_buffer, "HELLO!");
+
+        int err = sendto(sock, rx_buffer, len, 0, (struct sockaddr *)&dest_addr_ip4, sizeof(dest_addr_ip4));
+        if (err < 0) {
+            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+            closesocket(sock);
+            return ESP_FAIL;
+        }
+
+        struct sockaddr_storage source_addr;
+        socklen_t socklen = sizeof(source_addr);
+        len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+        if (len < 0) {
+            ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+            closesocket(sock);
+            return ESP_FAIL;
+        }
+        else {
+            rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+            ESP_LOGI(TAG, "Received:\n %s", rx_buffer);
+            
+
+        }
+
+        return ESP_OK;
+
     }
 
 }

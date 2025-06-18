@@ -101,6 +101,10 @@ extern "C" void app_main(void)
         }
     #endif
 
+
+    //TODO: do only if not local broker
+    clab::plugins::comm_discovery_request_server_info(NULL, 16, NULL);
+
     clab::plugins::comm_mqtt_client_start(is_local_broker);
     vTaskDelay(pdMS_TO_TICKS(5000));
 

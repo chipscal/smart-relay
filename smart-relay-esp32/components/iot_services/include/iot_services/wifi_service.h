@@ -22,5 +22,5 @@ namespace clab::iot_services {
     /// @brief Get wifi ip.
     /// @param[out] address where to store address.
     /// @return ESP_OK on success.
-    esp_err_t   wifi_get_ip(uint32_t *address);
+    esp_err_t   wifi_get_ip(uint32_t *address, uint32_t *netmask = NULL, uint32_t *gw = NULL);
 }

@@ -271,7 +271,7 @@ namespace clab::iot_services {
         return ESP_OK;
     }
 
-    esp_err_t wifi_get_ip(uint32_t *address) {
+    esp_err_t wifi_get_ip(uint32_t *address, uint32_t *netmask, uint32_t *gw) {
         esp_netif_ip_info_t info;
         esp_err_t result = esp_netif_get_ip_info(wifi_netif_handler, &info);
         if (result != ESP_OK) {
@@ -279,7 +279,15 @@ namespace clab::iot_services {
             return result;
         }
         
-        *address = info.ip.addr;
+        if (address != NULL)
+            *address = info.ip.addr;
+
+        if (netmask != NULL)
+            *netmask = info.netmask.addr;
+
+        if (gw != NULL)
+            *gw = info.gw.addr;
+
         return ESP_OK;
     }
 }
