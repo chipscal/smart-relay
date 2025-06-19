@@ -183,20 +183,16 @@ namespace clab::plugins {
         }
     }
 
-    esp_err_t comm_mqtt_client_start(bool is_local_broker) {
+    esp_err_t comm_mqtt_client_start(const char *broker_address, uint32_t broker_port) {
         esp_mqtt_client_config_t mqtt_cfg = {
             .broker = {
                 .address = {
-                    .hostname = is_local_broker ? "127.0.0.1" : CONFIG_MAIN_MQTT_BROKER_DEFAULT_URI,
+                    .hostname = broker_address,
                     .transport = MQTT_TRANSPORT_OVER_TCP,
-                    .port = CONFIG_MAIN_MQTT_BROKER_LISTEN_PORT
+                    .port = broker_port
                 }
             }
         };
-
-        if (strcmp(mqtt_cfg.broker.address.uri, "") == 0) {
-            //TODO: auto broker discovery
-        }
 
         comm_mqtt_client_handle = esp_mqtt_client_init(&mqtt_cfg);
         if (comm_mqtt_client_handle == NULL) {

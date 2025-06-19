@@ -88,6 +88,7 @@ extern "C" void app_main(void)
     //-------------------------------------- TODO: others plugin goes here:
     ESP_ERROR_CHECK(clab::plugins::comm_plugin());
 
+    //TODO: get UTC time from an NTP server
     
     bool is_local_broker = false;
     #if CONFIG_MAIN_MQTT_BROKER_DIN_CONF_CHANNEL != UINT8_MAX
@@ -100,12 +101,18 @@ extern "C" void app_main(void)
             is_local_broker = true;
         }
     #endif
+    
+    char        broker_address[16] = "127.0.0.1";
+    uint32_t    broker_port = CONFIG_MAIN_MQTT_BROKER_LISTEN_PORT;
+    if (!is_local_broker) {
 
+        while(clab::plugins::comm_discovery_request_server_info(broker_address, 
+                sizeof(broker_address), &broker_port) != ESP_OK) {
+            vTaskDelay(pdMS_TO_TICKS(30000));
+        }
+    }
 
-    //TODO: do only if not local broker
-    clab::plugins::comm_discovery_request_server_info(NULL, 16, NULL);
-
-    clab::plugins::comm_mqtt_client_start(is_local_broker);
+    clab::plugins::comm_mqtt_client_start(broker_address, broker_port);
     vTaskDelay(pdMS_TO_TICKS(5000));
 
     ESP_ERROR_CHECK(clab::plugins::control_plugin());

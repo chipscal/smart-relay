@@ -25,7 +25,7 @@ namespace clab::plugins {
     /// @brief Starts the MQTT client.
     /// @param is_local_broker if true connects to local broker
     /// @return ESP_OK on success.
-    esp_err_t comm_mqtt_client_start(bool is_local_broker);
+    esp_err_t comm_mqtt_client_start(const char *broker_address, uint32_t broker_port);
     
     /// @brief Emit property message.
     /// @param topic of the message

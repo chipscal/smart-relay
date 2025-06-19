@@ -39,6 +39,12 @@ menu "IoT Service"
         help 
             Maximum ammissible size of the DeviceUIDs in the network
 
+    config IOT_PROGRAM_MAX
+        int "Max device programs"
+        default 8
+        help 
+            Number of maximum simu device supporltaneous program the divece supports
+
     config IOT_IO_STORAGE_NAMESPACE
         string "Storage namespace used from IoT services"
         default "iot_services"

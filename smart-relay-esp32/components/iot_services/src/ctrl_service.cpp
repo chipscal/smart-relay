@@ -28,6 +28,8 @@ namespace clab::iot_services {
     std::array<uint32_t, 32>                            relay_last_switch;
     std::array<bool, 32>                                relay_logic_status;
 
+    std::array<dev_program_t, CONFIG_IOT_PROGRAM_MAX>                   programs;
+
 
     clab::iot_services::des_status_t                                    rules_action;
     std::array<clab::iot_services::combined_rule_t
@@ -80,6 +82,26 @@ namespace clab::iot_services {
         }
         else {
             memset(&ports, 0, ports.size());
+        }
+
+        // --------------------- control_rules:
+        for (int k = 0; k < programs.size(); k++) {
+            char key_buf[8];
+            snprintf(key_buf, 8, "prog%d", k);
+
+            programs[k] = clab::iot_services::dev_program_t();
+           
+            if (init_from_storage && clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+                ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
+
+                if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                    prop_value_buffer[out_size] = '\0';
+                    if (programs[k].parse_from((char *)prop_value_buffer) != ESP_OK) {
+                        ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                        memset(&(programs[k]), 0, sizeof(clab::iot_services::dev_program_t));
+                    }
+                }
+            }
         }
 
         // --------------------- rule action:
@@ -557,6 +579,29 @@ namespace clab::iot_services {
         return to_ret;
     }
 
+    void ctrl_program_loop(uint32_t actual_ts, dev_status_t &status, des_status_t &des_status, int k) {
+        
+        if (programs[k].end_ts > actual_ts && actual_ts >= programs[k].start_ts) {
+
+            auto relative_ts = actual_ts % programs[k].period();
+
+            if (relative_ts <= programs[k].duration) {
+                ESP_LOGI(TAG, "Prog[%d] active!", k);
+  
+                for (int idx = 0; idx < 32; idx++) {
+                    if (programs[k].latch_status(idx)) {
+                        des_status.latch_status(idx, true);
+                    }
+    
+                    if (programs[k].relay_status(idx)) {
+                        des_status.relay_status(idx, true);
+                    }
+                }
+            }
+
+        }
+    }
+
     esp_err_t ctrl_loop(uint32_t actual_ts, dev_status_t &status, des_status_t &overrides, 
             des_status_t *out_logic, bool output_enabled) {
 
@@ -570,7 +615,8 @@ namespace clab::iot_services {
         desired.relay_mask  |= rules_action.relay_mask;
         // desired.led_mask    |= rules_action.led_mask;
 
-        //TODO: can add device program here!
+        for (int k = 0; k < programs.size(); k++) 
+            ctrl_program_loop(actual_ts, status, desired, k);
         
         esp_err_t result = ctrl_port_loop(actual_ts, status, desired, out_logic, output_enabled);
         if (result != ESP_OK) {
