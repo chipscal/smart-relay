@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.ScanPage">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,4*,0.5*,0.5*,0.5*" ColumnDefinitions="*,*,*"
+            Padding="30,30">
+            
+
+            <Label Grid.Row="0" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                Text="Founded brokers:"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level2" />
+
+            
+            <CollectionView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                    ItemsSource="{Binding Items}" 
+                    SelectionMode="Single" 
+                    x:Name="BrokerCollectionView"
+                    SelectedItem="{Binding SelectedBroker, Mode=TwoWay}"
+                    Margin="10">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=4, Desktop=4}" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Border Padding="25" Margin="5" >
+                                <HorizontalStackLayout HorizontalOptions="Fill">
+                                    <Image
+                                        Source="dotnet_bot.png"
+                                        HeightRequest="50"
+                                        Aspect="AspectFit"
+                                        SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+                                    <Grid RowDefinitions="2*,Auto" ColumnDefinitions="*,*,Auto">
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" 
+                                            FontSize="24"
+                                            HorizontalOptions="Start" 
+                                            VerticalOptions="Center" />
+
+                                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="1" Text="{Binding Address}" 
+                                            FontSize="18"
+                                            HorizontalOptions="Start" 
+                                            VerticalOptions="Center" />
+                                        
+                                        <Label Text=":" Grid.Row="1" Grid.Column="1"
+                                            FontSize="18"
+                                            HorizontalOptions="Center" 
+                                            VerticalOptions="Center"/> 
+
+                                        <Label Grid.Row="1" Grid.Column="2" Text="{Binding Port}" 
+                                            FontSize="18"
+                                            HorizontalOptions="Center" 
+                                            VerticalOptions="Center" />
+                                    </Grid>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Entry Grid.Row="2" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                Placeholder="Enter username"
+                Keyboard="Default"
+                FontSize="18" />
+
+            <Entry Grid.Row="3" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                Placeholder="Enter password"
+                Keyboard="Default"
+                FontSize="18"
+                IsPassword="True" />
+
+            <Button Grid.Row="4" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                x:Name="ConnectBtn"
+                Text="Connect" 
+                SemanticProperties.Hint="Connects to selected Broker"
+                Clicked="OnConnectClicked"
+                HorizontalOptions="Fill" />
+
+
+        </Grid>
+    </ScrollView>
+
+</ContentPage>

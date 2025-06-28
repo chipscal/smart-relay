@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Image
+                Source="dotnet_bot.png"
+                HeightRequest="185"
+                Aspect="AspectFit"
+                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+
+            <Label
+                Text="CLAB Smart Relay!"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level1" />
+
+            <Button
+                x:Name="ScanBtn"
+                Text="Scan" 
+                SemanticProperties.Hint="Scans for local MQTT brokers"
+                Clicked="OnScanClicked"
+                HorizontalOptions="Fill" />
+
+            <Label
+                Text="or"
+                Style="{StaticResource SubHeadline}"
+                SemanticProperties.HeadingLevel="Level2"
+                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
+
+            <Entry 
+                Placeholder="Enter broker address"
+                Keyboard="Url"
+                FontSize="18" />
+
+            <Entry 
+                Placeholder="Enter username"
+                Keyboard="Default"
+                FontSize="18" />
+
+            <Entry 
+                Placeholder="Enter password"
+                Keyboard="Default"
+                FontSize="18"
+                IsPassword="True" />
+
+            <Button
+                x:Name="ConnectBtn"
+                Text="Connect" 
+                SemanticProperties.Hint="Connect to a specific MQTT broker"
+                Clicked="OnConnectClicked"
+                HorizontalOptions="Fill" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
