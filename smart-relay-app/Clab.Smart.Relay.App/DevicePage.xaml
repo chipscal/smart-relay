@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.DevicePage">
+
+    <ScrollView>
+        <Grid RowDefinitions="*,*" ColumnDefinitions="*,*"
+            Padding="30,30">
+
+            <VerticalStackLayout >
+                <Grid RowDefinitions="*,*" ColumnDefinitions="*,2*">
+                    
+                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                        Background="{StaticResource Primary}"  
+                        Stroke="{StaticResource Secondary}"
+                        WidthRequest="80"
+                        HeightRequest="80"
+                        Margin="10"
+                        HorizontalOptions="Start">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="10" />
+                        </Border.StrokeShape>
+                        <Label
+                            Text="R1" Grid.Column="0"
+                            HorizontalOptions="Center" 
+                            VerticalOptions="Center"
+                            FontAttributes="Bold"
+                            Style="{StaticResource Headline}"
+                            SemanticProperties.HeadingLevel="Level2" />
+                    
+                    </Border>
+
+                    <Label Grid.Row="0" Grid.Column="1" Text="RA1237917341" 
+                        FontSize="24"
+                        HorizontalOptions="Start" 
+                        VerticalOptions="Center" />
+
+                    <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="1" Text="SMART R1" 
+                        FontSize="18"
+                        HorizontalOptions="Start" 
+                        VerticalOptions="Center" />
+
+
+                </Grid>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}">
+                <Label
+                    Text="2"
+                    Style="{StaticResource Headline}"
+                    SemanticProperties.HeadingLevel="Level2" />
+            </VerticalStackLayout>
+
+        </Grid>
+    </ScrollView>
+</ContentPage>

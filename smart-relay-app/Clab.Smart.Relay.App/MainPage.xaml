@@ -4,57 +4,60 @@
              x:Class="Clab.Smart.Relay.App.MainPage">
 
     <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+        <Grid ColumnDefinitions="*,*,*">
 
-            <Label
-                Text="CLAB Smart Relay!"
-                Style="{StaticResource Headline}"
-                SemanticProperties.HeadingLevel="Level1" />
+            <VerticalStackLayout Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                Padding="30,0"
+                Spacing="25">
+                <Image
+                    Source="dotnet_bot.png"
+                    HeightRequest="185"
+                    Aspect="AspectFit"
+                    SemanticProperties.Description="dot net bot in a hovercraft number nine"/>
 
-            <Button
-                x:Name="ScanBtn"
-                Text="Scan" 
-                SemanticProperties.Hint="Scans for local MQTT brokers"
-                Clicked="OnScanClicked"
-                HorizontalOptions="Fill" />
+                <Label
+                    Text="CLAB Smart Relay!"
+                    Style="{StaticResource Headline}"
+                    SemanticProperties.HeadingLevel="Level1"/>
 
-            <Label
-                Text="or"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
+                <Button
+                    x:Name="ScanBtn"
+                    Text="Scan"
+                    SemanticProperties.Hint="Scans for local MQTT brokers"
+                    Clicked="OnScanClicked"
+                    HorizontalOptions="Fill"/>
 
-            <Entry 
-                Placeholder="Enter broker address"
-                Keyboard="Url"
-                FontSize="18" />
+                <Label
+                    Text="or"
+                    Style="{StaticResource SubHeadline}"
+                    SemanticProperties.HeadingLevel="Level2"
+                    SemanticProperties.Description="Welcome to dot net Multi platform App U I"/>
 
-            <Entry 
-                Placeholder="Enter username"
-                Keyboard="Default"
-                FontSize="18" />
+                <Entry
+                    Placeholder="Enter broker address"
+                    Keyboard="Url"
+                    FontSize="18"/>
 
-            <Entry 
-                Placeholder="Enter password"
-                Keyboard="Default"
-                FontSize="18"
-                IsPassword="True" />
+                <Entry
+                    Placeholder="Enter username"
+                    Keyboard="Default"
+                    FontSize="18"/>
 
-            <Button
-                x:Name="ConnectBtn"
-                Text="Connect" 
-                SemanticProperties.Hint="Connect to a specific MQTT broker"
-                Clicked="OnConnectClicked"
-                HorizontalOptions="Fill" />
+                <Entry
+                    Placeholder="Enter password"
+                    Keyboard="Default"
+                    FontSize="18"
+                    IsPassword="True"/>
 
-        </VerticalStackLayout>
+                <Button
+                    x:Name="ConnectBtn"
+                    Text="Connect"
+                    SemanticProperties.Hint="Connect to a specific MQTT broker"
+                    Clicked="OnConnectClicked"
+                    HorizontalOptions="Fill"/>
+
+            </VerticalStackLayout>
+        </Grid>
     </ScrollView>
 
 </ContentPage>

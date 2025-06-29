@@ -21,7 +21,7 @@
                     SelectedItem="{Binding SelectedBroker, Mode=TwoWay}"
                     Margin="10">
                 <CollectionView.ItemsLayout>
-                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=4, Desktop=4}" />
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=3, Desktop=3}" />
                 </CollectionView.ItemsLayout>
                 <CollectionView.ItemTemplate>
                     <DataTemplate>

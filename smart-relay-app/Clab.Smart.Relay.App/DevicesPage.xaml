@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.DevicesPage">
+
+    <ScrollView>
+        <Grid RowDefinitions="Auto,5*, 0.5*" ColumnDefinitions="*,*,*"
+            Padding="30,30">
+
+            <Label Grid.Row="0" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                Text="Founded devices:"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level2" />
+
+            
+            <CollectionView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                    ItemsSource="{Binding Items}" 
+                    SelectionMode="Single" 
+                    x:Name="DeviceCollectionView"
+                    SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
+                    Margin="10">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=3, Desktop=3}" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Border Padding="25" Margin="5" >
+                                <HorizontalStackLayout HorizontalOptions="Fill">
+                                    <Grid>
+                                        <!-- <Image
+                                            Source="dotnet_bot.png"
+                                            HeightRequest="50"
+                                            Aspect="AspectFit"
+                                            SemanticProperties.Description="dot net bot in a hovercraft number nine" /> -->
+                                        <Rectangle Fill="{StaticResource Primary}"
+                                            Stroke="{StaticResource Secondary}"
+                                            StrokeThickness="3"
+                                            RadiusX="5"
+                                            RadiusY="5"
+                                            WidthRequest="60"
+                                            HeightRequest="60"
+                                            Margin="10"
+                                            HorizontalOptions="Start" />
+
+                                        <Label
+                                            Text="{Binding ModelInitials}"
+                                            HorizontalOptions="Center" 
+                                            VerticalOptions="Center"
+                                            FontAttributes="Bold"
+                                            Style="{StaticResource Headline}"
+                                            SemanticProperties.HeadingLevel="Level2" />
+
+                                        <Ellipse WidthRequest="15"
+                                            HeightRequest="15"
+                                            Stroke="{Binding IsActive}"
+                                            StrokeThickness="4"
+                                            Fill="{Binding IsActive}"
+                                            HorizontalOptions="Start"
+                                            Margin ="5"
+                                            VerticalOptions="End" />
+                                    </Grid>
+                                    <Grid RowDefinitions="2*,Auto" ColumnDefinitions="*,Auto">
+                                        <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" 
+                                            FontSize="24"
+                                            HorizontalOptions="Start" 
+                                            VerticalOptions="Center" />
+
+                                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="1" Text="{Binding ModelName}" 
+                                            FontSize="18"
+                                            HorizontalOptions="Start" 
+                                            VerticalOptions="Center" />
+                                        
+                                    </Grid>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+
+            <Button Grid.Row="4" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                x:Name="ConnectBtn"
+                Text="Connect" 
+                SemanticProperties.Hint="Connects to selected Device"
+                Clicked="OnConnectClicked"
+                HorizontalOptions="Fill" />
+
+
+        </Grid>
+    </ScrollView>
+</ContentPage>

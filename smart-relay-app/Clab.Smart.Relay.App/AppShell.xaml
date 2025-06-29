@@ -16,4 +16,14 @@
         ContentTemplate="{DataTemplate local:ScanPage}"
         Route="ScanPage" />
 
+    <ShellContent
+        Title="Devices" 
+        ContentTemplate="{DataTemplate local:DevicesPage}"
+        Route="DevicesPage" />
+
+    <ShellContent
+        Title="Device" 
+        ContentTemplate="{DataTemplate local:DevicePage}"
+        Route="DevicePage" />
+
 </Shell>
