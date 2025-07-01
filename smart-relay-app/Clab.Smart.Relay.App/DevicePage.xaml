@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Clab.Smart.Relay.App.DevicePage">
 
-    <ScrollView>
+    <!-- <ScrollView Orientation="Vertical"> -->
         <Grid RowDefinitions="*,*" ColumnDefinitions="*,*"
             Padding="30,30">
 
-            <VerticalStackLayout >
-                <Grid RowDefinitions="*,*" ColumnDefinitions="*,2*">
+            <VerticalStackLayout Grid.Row="0" Grid.RowSpan="{OnIdiom Phone=1, Tablet=2, Desktop=2}" Grid.Column="0" Grid.ColumnSpan="{OnIdiom Phone=2, Tablet=1, Desktop=1}">
+                <Grid RowDefinitions="*,*" ColumnDefinitions="*,2*" Margin="10">
                     
                     <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
                         Background="{StaticResource Primary}"  
@@ -39,9 +39,33 @@
                         FontSize="18"
                         HorizontalOptions="Start" 
                         VerticalOptions="Center" />
-
-
                 </Grid>
+                <CollectionView 
+                    ItemsSource="{Binding DeviceStatus}" 
+                    SelectionMode="None" 
+                    x:Name="DeviceStatusCollectionView"
+                    Margin="10" HorizontalOptions="Fill">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="1" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10" Margin="5" HorizontalOptions="Fill">
+                                <Grid ColumnDefinitions="3*,Auto,5*" >
+                                    <Label Grid.Column="0" Text="{Binding Name}" 
+                                        FontSize="20"
+                                        HorizontalOptions="Start" 
+                                        VerticalOptions="Center" />
+
+                                    <Label Grid.Column ="2"  Text="{Binding Value}" 
+                                        FontSize="15"
+                                        HorizontalOptions="End"  
+                                        VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </VerticalStackLayout>
 
             <VerticalStackLayout Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}">
@@ -52,5 +76,5 @@
             </VerticalStackLayout>
 
         </Grid>
-    </ScrollView>
+    <!-- </ScrollView> -->
 </ContentPage>
