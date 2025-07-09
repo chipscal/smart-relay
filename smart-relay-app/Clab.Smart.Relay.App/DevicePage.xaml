@@ -3,33 +3,35 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Clab.Smart.Relay.App.DevicePage">
 
-    <!-- <ScrollView Orientation="Vertical"> -->
-        <Grid RowDefinitions="*,*" ColumnDefinitions="*,*"
-            Padding="30,30">
+    <ScrollView>
+        <Grid ColumnDefinitions="*,*" Margin="10">
 
-            <VerticalStackLayout Grid.Row="0" Grid.RowSpan="{OnIdiom Phone=1, Tablet=2, Desktop=2}" Grid.Column="0" Grid.ColumnSpan="{OnIdiom Phone=2, Tablet=1, Desktop=1}">
-                <Grid RowDefinitions="*,*" ColumnDefinitions="*,2*" Margin="10">
-                    
-                    <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
-                        Background="{StaticResource Primary}"  
-                        Stroke="{StaticResource Secondary}"
-                        WidthRequest="80"
-                        HeightRequest="80"
-                        Margin="10"
-                        HorizontalOptions="Start">
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="10" />
-                        </Border.StrokeShape>
-                        <Label
-                            Text="R1" Grid.Column="0"
-                            HorizontalOptions="Center" 
-                            VerticalOptions="Center"
-                            FontAttributes="Bold"
-                            Style="{StaticResource Headline}"
-                            SemanticProperties.HeadingLevel="Level2" />
-                    
-                    </Border>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{OnIdiom Phone='*', Tablet=*, Desktop=*}" />
+                <RowDefinition Height="{OnIdiom Phone='2*', Tablet=2*, Desktop=2*}" />
+                <RowDefinition Height="{OnIdiom Phone='8*', Tablet=3*, Desktop=3*}" />
+            </Grid.RowDefinitions>
 
+            <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Margin="10">
+                <Border 
+                    Background="{StaticResource Primary}"  
+                    Stroke="{StaticResource Secondary}"
+                    WidthRequest="80"
+                    HeightRequest="80"
+                    Margin="10"
+                    HorizontalOptions="Start">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10" />
+                    </Border.StrokeShape>
+                    <Label
+                        Text="R1" Grid.Column="0"
+                        HorizontalOptions="Center" 
+                        VerticalOptions="Center"
+                        FontAttributes="Bold"
+                        Style="{StaticResource Headline}"
+                        SemanticProperties.HeadingLevel="Level2" />
+                </Border>
+                <VerticalStackLayout Margin="10">
                     <Label Grid.Row="0" Grid.Column="1" Text="RA1237917341" 
                         FontSize="24"
                         HorizontalOptions="Start" 
@@ -39,42 +41,223 @@
                         FontSize="18"
                         HorizontalOptions="Start" 
                         VerticalOptions="Center" />
-                </Grid>
-                <CollectionView 
-                    ItemsSource="{Binding DeviceStatus}" 
-                    SelectionMode="None" 
-                    x:Name="DeviceStatusCollectionView"
-                    Margin="10" HorizontalOptions="Fill">
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" Span="1" />
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Border Padding="10" Margin="5" HorizontalOptions="Fill">
-                                <Grid ColumnDefinitions="3*,Auto,5*" >
-                                    <Label Grid.Column="0" Text="{Binding Name}" 
+                </VerticalStackLayout>
+            </HorizontalStackLayout>
+            <CollectionView  Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                ItemsSource="{Binding DeviceStatus}" 
+                SelectionMode="None" 
+                x:Name="DeviceStatusCollectionView"
+                Margin="10" >
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=0, Tablet=2, Desktop=2}" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Padding="10" Margin="5" >
+                            <Grid ColumnDefinitions="3*,5*" >
+                                <Label Grid.Column="0" Text="{Binding Name}" 
+                                    FontSize="20"
+                                    HorizontalOptions="Start" 
+                                    VerticalOptions="Center" />
+
+                                <Label Grid.Column ="1"  Text="{Binding Value}" 
+                                    FontSize="15"
+                                    HorizontalOptions="Start"  
+                                    VerticalOptions="Center" 
+                                    FontAutoScalingEnabled="True"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+            <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" RowDefinitions="*,*,*" ColumnDefinitions="*,*,*">
+                <VerticalStackLayout 
+                    Grid.Column="{OnIdiom Phone=0, Tablet=0, Desktop=0}" 
+                    Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                    Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}">
+                    <Grid ColumnDefinitions="*,*">
+                        <Label Grid.Column="0" Text="Properties:" 
                                         FontSize="20"
                                         HorizontalOptions="Start" 
-                                        VerticalOptions="Center" />
+                                        VerticalOptions="Center"
+                                        Margin="10" />
+                        
+                        <ImageButton Grid.Column="1"
+                            HorizontalOptions="End"
+                            Source="plus_button_primary.png"
+                            Margin="10"
+                            HeightRequest="10"
+                            CornerRadius="20"
+                            Clicked="AddPropClicked">
+                        </ImageButton>
+                    </Grid>
+                    <ListView ItemsSource="{Binding DeviceProperties}"
+                        Margin="5">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <Border Padding="10" Margin="5">
+                                        <Grid ColumnDefinitions="3*,5*" >
+                                            <Label Grid.Column="0" Text="{Binding Name}" 
+                                                FontSize="20"
+                                                HorizontalOptions="Start" 
+                                                VerticalOptions="Center" />
 
-                                    <Label Grid.Column ="2"  Text="{Binding Value}" 
-                                        FontSize="15"
-                                        HorizontalOptions="End"  
-                                        VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
+                                            <Label Grid.Column ="1"  Text="{Binding Value}" 
+                                                FontSize="15"
+                                                HorizontalOptions="End"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+                                        </Grid>
+                                    </Border>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </VerticalStackLayout>
+                <VerticalStackLayout 
+                    Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" 
+                    Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                    Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}">
+                    <Grid ColumnDefinitions="*,*">
+                        <Label Grid.Column="0" Text="Rules:" 
+                                        FontSize="20"
+                                        HorizontalOptions="Start" 
+                                        VerticalOptions="Center"
+                                        Margin="10" />
+                        
+                        <ImageButton Grid.Column="1"
+                            HorizontalOptions="End"
+                            Source="plus_button_primary.png"
+                            Margin="10"
+                            HeightRequest="10"
+                            CornerRadius="20"
+                            Clicked="AddRuleClicked">
+                        </ImageButton>
+                    </Grid>
+                    <ListView ItemsSource="{Binding DeviceRules}"
+                        Margin="5">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell>
+                                    <Border Padding="10" Margin="5" >
+                                        <Grid ColumnDefinitions="2*,5*,1*" >
+                                            <Border Grid.Column="0"
+                                                Background="{StaticResource Primary}"  
+                                                Stroke="{StaticResource Secondary}"
+                                                WidthRequest="50"
+                                                HeightRequest="50"
+                                                Margin="10"
+                                                HorizontalOptions="Start">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label
+                                                    Text="{Binding Index}" Grid.Column="0"
+                                                    HorizontalOptions="Center" 
+                                                    VerticalOptions="Center"
+                                                    FontAttributes="Bold"
+                                                    FontSize="24" />
+                                            </Border>
 
-            <VerticalStackLayout Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}" Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}">
-                <Label
-                    Text="2"
-                    Style="{StaticResource Headline}"
-                    SemanticProperties.HeadingLevel="Level2" />
-            </VerticalStackLayout>
+                                            <Label Grid.Column ="1"  Text="{Binding CombinedRule}" 
+                                                FontSize="18"
+                                                HorizontalOptions="Start"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
 
+                                            <Label Grid.Column ="2"  Text="{Binding Action}" 
+                                                FontSize="24"
+                                                FontAttributes="Bold"
+                                                HorizontalOptions="End"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+                                        </Grid>
+                                    </Border>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </VerticalStackLayout>
+                <VerticalStackLayout 
+                    Grid.Column="{OnIdiom Phone=0, Tablet=2, Desktop=2}" 
+                    Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                    Grid.Row="{OnIdiom Phone=2, Tablet=0, Desktop=0}">
+                    <Grid ColumnDefinitions="*,*">
+                        <Label Grid.Column="0" Text="Programs:" 
+                                        FontSize="20"
+                                        HorizontalOptions="Start" 
+                                        VerticalOptions="Center"
+                                        Margin="10" />
+                        
+                        <ImageButton Grid.Column="1"
+                            HorizontalOptions="End"
+                            Source="plus_button_primary.png"
+                            Margin="10"
+                            HeightRequest="10"
+                            CornerRadius="20"
+                            Clicked="AddProgramClicked">
+                        </ImageButton>
+                    </Grid>
+                    <ListView ItemsSource="{Binding DevicePrograms}"
+                        Margin="5">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <ViewCell >
+                                    <Border Padding="10" Margin="5" >
+                                        <Grid ColumnDefinitions="2*,4*,2*" RowDefinitions="*,*">
+                                            <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                                                Background="{StaticResource Primary}"  
+                                                Stroke="{StaticResource Secondary}"
+                                                WidthRequest="50"
+                                                HeightRequest="50"
+                                                Margin="10"
+                                                HorizontalOptions="Start">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
+                                                <Label
+                                                    Text="{Binding Index}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                                                    HorizontalOptions="Center" 
+                                                    VerticalOptions="Center"
+                                                    FontAttributes="Bold"
+                                                    FontSize="24" />
+                                            </Border>
+
+                                            <Label Grid.Column ="1" Grid.Row="0" Text="{Binding Start}" 
+                                                FontSize="18"
+                                                HorizontalOptions="Start"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+
+                                            <Label Grid.Column ="1" Grid.Row="1" Text="{Binding End}" 
+                                                FontSize="18"
+                                                HorizontalOptions="Start"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+
+                                            <Label Grid.Column ="2" Grid.Row="0" Text="{Binding Duration}" 
+                                                FontSize="20"
+                                                FontAttributes="Bold"
+                                                HorizontalOptions="End"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+
+                                            <Label Grid.Column ="2" Grid.Row="1" Text="{Binding Idle}" 
+                                                FontSize="20"
+                                                FontAttributes="Bold"
+                                                HorizontalOptions="End"  
+                                                VerticalOptions="Center" 
+                                                FontAutoScalingEnabled="True"/>
+                                        </Grid>
+                                    </Border>
+                                </ViewCell>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </VerticalStackLayout>
+
+            </Grid>
         </Grid>
-    <!-- </ScrollView> -->
+    </ScrollView>
 </ContentPage>
