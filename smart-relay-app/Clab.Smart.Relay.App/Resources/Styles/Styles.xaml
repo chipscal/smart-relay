@@ -36,7 +36,16 @@
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Normal">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.9" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource Gray950}, Dark={StaticResource Gray200}}" />
@@ -149,7 +158,16 @@
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Normal">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="1" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.9" />
+                        </VisualState.Setters>
+                    </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="Opacity" Value="0.5" />
