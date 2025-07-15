@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.SetDeviceProp"
+             xmlns:app="clr-namespace:Clab.Smart.Relay.App"
+             xmlns:common="clr-namespace:Clab.Smart.Relay.App.Common">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <common:EnumToStringConverter x:Key="EnumToStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView x:Name="PageRoot">
+        <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*,*"> 
+            <VerticalStackLayout Grid.Row="1"
+                Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}">
+                <app:DeviceHeaderView 
+                    Title="{Binding DeviceUID}" Model="SMART R1"/>
+                <Label 
+                    Text="Property:" 
+                    FontSize="18"
+                    Margin="10"
+                    HorizontalOptions="Start" 
+                    VerticalOptions="Center" />
+                
+                <Picker 
+                    ItemsSource="{Binding AllTags}" 
+                    SelectedItem="{Binding Tag}"
+                    ItemDisplayBinding="{Binding ., Converter={StaticResource EnumToStringConverter}}">
+                </Picker>
+
+                <Entry 
+                    Text="{Binding Value}"
+                    Placeholder="Enter value"
+                    Keyboard="Default"
+                    FontSize="18" 
+                    Margin="0,20,0,10"/>
+
+                <Grid 
+                    RowDefinitions="*,*" ColumnDefinitions="*,0.5*,*">
+                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=0, Desktop=0}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                        Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}"
+                        x:Name="CancelBtn"
+                        Text="Cancel" 
+                        SemanticProperties.Hint="Cancel the operation"
+                        Clicked="OnCancelClicked"
+                        HorizontalOptions="Fill" />
+
+                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=3, Desktop=5}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                        Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}"
+                        x:Name="SaveBtn"
+                        Text="Save" 
+                        SemanticProperties.Hint="Cancel the operation"
+                        Clicked="OnSaveClicked"
+                        HorizontalOptions="Fill" />
+                </Grid>
+
+            </VerticalStackLayout>
+
+            
+        </Grid>
+    </ScrollView>
+</ContentPage>

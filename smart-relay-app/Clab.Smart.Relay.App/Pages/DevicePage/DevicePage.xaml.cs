@@ -97,6 +97,13 @@ public partial class DevicePage : ContentPage
                 Value = "3000 ms"
             }
         };
+        PropertyList.OnAddPropertyClicked = async () =>
+        {
+            await Navigation.PushModalAsync(new SetDeviceProp
+            {
+                DeviceUID = "RA1237917341",
+            });
+        };
 
         RuleList = new RuleListView();
         RuleList.DeviceRules = new ObservableCollection<DeviceRuleInfo>
