@@ -45,7 +45,8 @@ public partial class SetDeviceProp : ContentPage, INotifyPropertyChanged
         }
     }
 
-    public ObservableCollection<DeviceTags> AllTags { get; } = new ObservableCollection<DeviceTags>(Enum.GetValues<DeviceTags>());
+    public ObservableCollection<DeviceTags> AllTags { get; } = new ObservableCollection<DeviceTags>(
+            Enum.GetValues<DeviceTags>().Where(t => t.IsSettableProperty()));
 
     public SetDeviceProp()
     {

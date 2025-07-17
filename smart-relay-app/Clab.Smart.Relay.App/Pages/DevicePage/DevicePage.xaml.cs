@@ -147,7 +147,7 @@ public partial class DevicePage : ContentPage
     {
         var stack = new VerticalStackLayout
         {
-
+            
         };
 
         stack.Children.Add(DeviceHeader);

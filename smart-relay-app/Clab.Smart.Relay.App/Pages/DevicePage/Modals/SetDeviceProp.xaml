@@ -20,13 +20,14 @@
                 <Label 
                     Text="Property:" 
                     FontSize="18"
-                    Margin="10"
+                    Margin="15,0,10,0"
                     HorizontalOptions="Start" 
                     VerticalOptions="Center" />
                 
                 <Picker 
                     ItemsSource="{Binding AllTags}" 
                     SelectedItem="{Binding Tag}"
+                    Margin="10"
                     ItemDisplayBinding="{Binding ., Converter={StaticResource EnumToStringConverter}}">
                 </Picker>
 
@@ -35,22 +36,24 @@
                     Placeholder="Enter value"
                     Keyboard="Default"
                     FontSize="18" 
-                    Margin="0,20,0,10"/>
+                    Margin="10,20,10,10"/>
 
                 <Grid 
                     RowDefinitions="*,*" ColumnDefinitions="*,0.5*,*">
                     <Button Grid.Column="{OnIdiom Phone=0, Tablet=0, Desktop=0}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
                         Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}"
                         x:Name="CancelBtn"
-                        Text="Cancel" 
+                        Text="Cancel"
+                        Margin="10"
                         SemanticProperties.Hint="Cancel the operation"
                         Clicked="OnCancelClicked"
                         HorizontalOptions="Fill" />
 
-                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=3, Desktop=5}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
-                        Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}"
+                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=3, Desktop=3}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                        Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}"
                         x:Name="SaveBtn"
                         Text="Save" 
+                        Margin="10"
                         SemanticProperties.Hint="Cancel the operation"
                         Clicked="OnSaveClicked"
                         HorizontalOptions="Fill" />

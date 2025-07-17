@@ -760,6 +760,111 @@ public static class DevicePropertyUtils
         };
     }
 
+    public static bool IsSettableProperty(this DeviceTags tag)
+    {
+        return tag switch
+        {
+            DeviceTags.PULSE_FILTER1 or
+            DeviceTags.PULSE_FILTER2 or
+            DeviceTags.PULSE_FILTER3 or
+            DeviceTags.PULSE_FILTER4 or
+            DeviceTags.PULSE_FILTER5 or
+            DeviceTags.PULSE_FILTER6 or
+            DeviceTags.PULSE_FILTER7 or
+            DeviceTags.PULSE_FILTER8 or
+            DeviceTags.PULSE_FILTER9 or
+            DeviceTags.PULSE_FILTER10 or
+            DeviceTags.PULSE_FILTER11 or
+            DeviceTags.PULSE_FILTER12 or
+            DeviceTags.PULSE_FILTER13 or
+            DeviceTags.PULSE_FILTER14 or
+            DeviceTags.PULSE_FILTER15 or
+            DeviceTags.PULSE_FILTER16 or
+            DeviceTags.PULSE_FILTER17 or
+            DeviceTags.PULSE_FILTER18 or
+            DeviceTags.PULSE_FILTER19 or
+            DeviceTags.PULSE_FILTER20 or
+            DeviceTags.PULSE_FILTER21 or
+            DeviceTags.PULSE_FILTER22 or
+            DeviceTags.PULSE_FILTER23 or
+            DeviceTags.PULSE_FILTER24 or
+            DeviceTags.PULSE_FILTER25 or
+            DeviceTags.PULSE_FILTER26 or
+            DeviceTags.PULSE_FILTER27 or
+            DeviceTags.PULSE_FILTER28 or
+            DeviceTags.PULSE_FILTER29 or
+            DeviceTags.PULSE_FILTER30 or
+            DeviceTags.PULSE_FILTER31 or
+            DeviceTags.PULSE_FILTER32 or
+            DeviceTags.RELAY_DELAYS1 or
+            DeviceTags.RELAY_DELAYS2 or
+            DeviceTags.RELAY_DELAYS3 or
+            DeviceTags.RELAY_DELAYS4 or
+            DeviceTags.RELAY_DELAYS5 or
+            DeviceTags.RELAY_DELAYS6 or
+            DeviceTags.RELAY_DELAYS7 or
+            DeviceTags.RELAY_DELAYS8 or
+            DeviceTags.RELAY_DELAYS9 or
+            DeviceTags.RELAY_DELAYS10 or
+            DeviceTags.RELAY_DELAYS11 or
+            DeviceTags.RELAY_DELAYS12 or
+            DeviceTags.RELAY_DELAYS13 or
+            DeviceTags.RELAY_DELAYS14 or
+            DeviceTags.RELAY_DELAYS15 or
+            DeviceTags.RELAY_DELAYS16 or
+            DeviceTags.RELAY_DELAYS17 or
+            DeviceTags.RELAY_DELAYS18 or
+            DeviceTags.RELAY_DELAYS19 or
+            DeviceTags.RELAY_DELAYS20 or
+            DeviceTags.RELAY_DELAYS21 or
+            DeviceTags.RELAY_DELAYS22 or
+            DeviceTags.RELAY_DELAYS23 or
+            DeviceTags.RELAY_DELAYS24 or
+            DeviceTags.RELAY_DELAYS25 or
+            DeviceTags.RELAY_DELAYS26 or
+            DeviceTags.RELAY_DELAYS27 or
+            DeviceTags.RELAY_DELAYS28 or
+            DeviceTags.RELAY_DELAYS29 or
+            DeviceTags.RELAY_DELAYS30 or
+            DeviceTags.RELAY_DELAYS31 or
+            DeviceTags.RELAY_DELAYS32 or
+            DeviceTags.LATCH_DELAYS1 or
+            DeviceTags.LATCH_DELAYS2 or
+            DeviceTags.LATCH_DELAYS3 or
+            DeviceTags.LATCH_DELAYS4 or
+            DeviceTags.LATCH_DELAYS5 or
+            DeviceTags.LATCH_DELAYS6 or
+            DeviceTags.LATCH_DELAYS7 or
+            DeviceTags.LATCH_DELAYS8 or
+            DeviceTags.LATCH_DELAYS9 or
+            DeviceTags.LATCH_DELAYS10 or
+            DeviceTags.LATCH_DELAYS11 or
+            DeviceTags.LATCH_DELAYS12 or
+            DeviceTags.LATCH_DELAYS13 or
+            DeviceTags.LATCH_DELAYS14 or
+            DeviceTags.LATCH_DELAYS15 or
+            DeviceTags.LATCH_DELAYS16 or
+            DeviceTags.LATCH_DELAYS17 or
+            DeviceTags.LATCH_DELAYS18 or
+            DeviceTags.LATCH_DELAYS19 or
+            DeviceTags.LATCH_DELAYS20 or
+            DeviceTags.LATCH_DELAYS21 or
+            DeviceTags.LATCH_DELAYS22 or
+            DeviceTags.LATCH_DELAYS23 or
+            DeviceTags.LATCH_DELAYS24 or
+            DeviceTags.LATCH_DELAYS25 or
+            DeviceTags.LATCH_DELAYS26 or
+            DeviceTags.LATCH_DELAYS27 or
+            DeviceTags.LATCH_DELAYS28 or
+            DeviceTags.LATCH_DELAYS29 or
+            DeviceTags.LATCH_DELAYS30 or
+            DeviceTags.LATCH_DELAYS31 or
+            DeviceTags.LATCH_DELAYS32 or
+            DeviceTags.OVERRIDE => true,
+            _ => false
+        };
+    }
+
     /// <summary>
     /// Returns tag associated to given alias string
     /// </summary>

@@ -5,18 +5,18 @@
 
 
     <VerticalStackLayout>
-        <Grid ColumnDefinitions="*,*">
+        <Grid ColumnDefinitions="*,0.3*">
             <Label Grid.Column="0"
                     Text="Rules:"
                    FontSize="20"
                    HorizontalOptions="Start"
                    VerticalOptions="Center"
-                   Margin="10"/>
+                   Margin="15,0"/>
 
             <ImageButton Grid.Column="1"
                          HorizontalOptions="End"
                          Source="plus_button_primary.png"
-                         Margin="10"
+                         Margin="0"
                          HeightRequest="10"
                          CornerRadius="20"
                          Clicked="AddRuleClicked">
