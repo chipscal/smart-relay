@@ -22,9 +22,14 @@ public class DevicePropertyInfo
 
 public class DeviceRuleInfo
 {
-    public int                      Index           { get; set; }
-    public IEnumerable<string>      UnaryRules      { get; set; }
-    public string                   Action          { get; set; }
+    public int Index { get; set; }
+    public IEnumerable<string> UnaryRules { get; set; }
+    public string Action { get; set; }
 
     public string CombinedRule => UnaryRules.Aggregate((s1, s2) => s1 + "\n" + s2);
+}
+
+public class DeviceUnaryConditionInfo : DeviceUnaryCondition
+{
+    public int? Index { get; set; }
 }

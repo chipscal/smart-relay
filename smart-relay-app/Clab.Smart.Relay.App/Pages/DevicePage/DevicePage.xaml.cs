@@ -99,7 +99,7 @@ public partial class DevicePage : ContentPage
         };
         PropertyList.OnAddPropertyClicked = async () =>
         {
-            await Navigation.PushModalAsync(new SetDeviceProp
+            await Navigation.PushModalAsync(new SetPropertyModal
             {
                 DeviceUID = "RA1237917341",
             });
@@ -132,7 +132,29 @@ public partial class DevicePage : ContentPage
 
         RuleList.OnAddRuleClicked = async () =>
         {
-            Debug.WriteLine("clickeeeeed!");
+            await Navigation.PushModalAsync(new SetRuleModal
+            {
+                DeviceUID = "RA1237917341",
+                Conditions = new ObservableCollection<DeviceUnaryConditionInfo>
+                {
+                    new DeviceUnaryConditionInfo
+                    {
+                        Index = 1,
+                        Port = DeviceTags.DIGITAL_INPUT1,
+                        Operator = DeviceUnaryOperator.EQ,
+                        Target = "RA1237917342",
+                        Value = 1
+                    },
+                    new DeviceUnaryConditionInfo
+                    {
+                        Index = 2,
+                        Port = DeviceTags.DIGITAL_INPUT2,
+                        Operator = DeviceUnaryOperator.EQ,
+                        Target = "RA1237917342",
+                        Value = 1
+                    }
+                }
+            });
         };
 
         if (DeviceInfo.Current.Idiom == DeviceIdiom.Phone)

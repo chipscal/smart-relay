@@ -8,7 +8,7 @@ using Microsoft.Maui.Controls;
 namespace Clab.Smart.Relay.App;
 
 
-public partial class SetDeviceProp : ContentPage, INotifyPropertyChanged
+public partial class SetPropertyModal : ContentPage, INotifyPropertyChanged
 {
 
     private string _deviceUID;
@@ -48,7 +48,7 @@ public partial class SetDeviceProp : ContentPage, INotifyPropertyChanged
     public ObservableCollection<DeviceTags> AllTags { get; } = new ObservableCollection<DeviceTags>(
             Enum.GetValues<DeviceTags>().Where(t => t.IsSettableProperty()));
 
-    public SetDeviceProp()
+    public SetPropertyModal()
     {
         InitializeComponent();
 

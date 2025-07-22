@@ -865,6 +865,214 @@ public static class DevicePropertyUtils
         };
     }
 
+    public static bool IsOutputProperty(this DeviceTags tag)
+    {
+        return tag switch
+        {
+            DeviceTags.RELAY1 or
+            DeviceTags.RELAY2 or
+            DeviceTags.RELAY3 or
+            DeviceTags.RELAY4 or
+            DeviceTags.RELAY5 or
+            DeviceTags.RELAY6 or
+            DeviceTags.RELAY7 or
+            DeviceTags.RELAY8 or
+            DeviceTags.RELAY9 or
+            DeviceTags.RELAY10 or
+            DeviceTags.RELAY11 or
+            DeviceTags.RELAY12 or
+            DeviceTags.RELAY13 or
+            DeviceTags.RELAY14 or
+            DeviceTags.RELAY15 or
+            DeviceTags.RELAY16 or
+            DeviceTags.RELAY17 or
+            DeviceTags.RELAY18 or
+            DeviceTags.RELAY19 or
+            DeviceTags.RELAY20 or
+            DeviceTags.RELAY21 or
+            DeviceTags.RELAY22 or
+            DeviceTags.RELAY23 or
+            DeviceTags.RELAY24 or
+            DeviceTags.RELAY25 or
+            DeviceTags.RELAY26 or
+            DeviceTags.RELAY27 or
+            DeviceTags.RELAY28 or
+            DeviceTags.RELAY29 or
+            DeviceTags.RELAY30 or
+            DeviceTags.RELAY31 or
+            DeviceTags.RELAY32 or
+            DeviceTags.LATCH1 or
+            DeviceTags.LATCH2 or
+            DeviceTags.LATCH3 or
+            DeviceTags.LATCH4 or
+            DeviceTags.LATCH5 or
+            DeviceTags.LATCH6 or
+            DeviceTags.LATCH7 or
+            DeviceTags.LATCH8 or
+            DeviceTags.LATCH9 or
+            DeviceTags.LATCH10 or
+            DeviceTags.LATCH11 or
+            DeviceTags.LATCH12 or
+            DeviceTags.LATCH13 or
+            DeviceTags.LATCH14 or
+            DeviceTags.LATCH15 or
+            DeviceTags.LATCH16 or
+            DeviceTags.LATCH17 or
+            DeviceTags.LATCH18 or
+            DeviceTags.LATCH19 or
+            DeviceTags.LATCH20 or
+            DeviceTags.LATCH21 or
+            DeviceTags.LATCH22 or
+            DeviceTags.LATCH23 or
+            DeviceTags.LATCH24 or
+            DeviceTags.LATCH25 or
+            DeviceTags.LATCH26 or
+            DeviceTags.LATCH27 or
+            DeviceTags.LATCH28 or
+            DeviceTags.LATCH29 or
+            DeviceTags.LATCH30 or
+            DeviceTags.LATCH31 or
+            DeviceTags.LATCH32 => true,
+            _ => false
+        };
+    }
+
+    public static bool IsInputProperty(this DeviceTags tag)
+    {
+        return tag switch
+        {
+            DeviceTags.DIGITAL_INPUT1 or
+            DeviceTags.DIGITAL_INPUT2 or
+            DeviceTags.DIGITAL_INPUT3 or
+            DeviceTags.DIGITAL_INPUT4 or
+            DeviceTags.DIGITAL_INPUT5 or
+            DeviceTags.DIGITAL_INPUT6 or
+            DeviceTags.DIGITAL_INPUT7 or
+            DeviceTags.DIGITAL_INPUT8 or
+            DeviceTags.DIGITAL_INPUT9 or
+            DeviceTags.DIGITAL_INPUT10 or
+            DeviceTags.DIGITAL_INPUT11 or
+            DeviceTags.DIGITAL_INPUT12 or
+            DeviceTags.DIGITAL_INPUT13 or
+            DeviceTags.DIGITAL_INPUT14 or
+            DeviceTags.DIGITAL_INPUT15 or
+            DeviceTags.DIGITAL_INPUT16 or
+            DeviceTags.DIGITAL_INPUT17 or
+            DeviceTags.DIGITAL_INPUT18 or
+            DeviceTags.DIGITAL_INPUT19 or
+            DeviceTags.DIGITAL_INPUT20 or
+            DeviceTags.DIGITAL_INPUT21 or
+            DeviceTags.DIGITAL_INPUT22 or
+            DeviceTags.DIGITAL_INPUT23 or
+            DeviceTags.DIGITAL_INPUT24 or
+            DeviceTags.DIGITAL_INPUT25 or
+            DeviceTags.DIGITAL_INPUT26 or
+            DeviceTags.DIGITAL_INPUT27 or
+            DeviceTags.DIGITAL_INPUT28 or
+            DeviceTags.DIGITAL_INPUT29 or
+            DeviceTags.DIGITAL_INPUT30 or
+            DeviceTags.DIGITAL_INPUT31 or
+            DeviceTags.DIGITAL_INPUT32 or
+            DeviceTags.PULSE_INPUT1 or
+            DeviceTags.PULSE_INPUT2 or
+            DeviceTags.PULSE_INPUT3 or
+            DeviceTags.PULSE_INPUT4 or
+            DeviceTags.PULSE_INPUT5 or
+            DeviceTags.PULSE_INPUT6 or
+            DeviceTags.PULSE_INPUT7 or
+            DeviceTags.PULSE_INPUT8 or
+            DeviceTags.PULSE_INPUT9 or
+            DeviceTags.PULSE_INPUT10 or
+            DeviceTags.PULSE_INPUT11 or
+            DeviceTags.PULSE_INPUT12 or
+            DeviceTags.PULSE_INPUT13 or
+            DeviceTags.PULSE_INPUT14 or
+            DeviceTags.PULSE_INPUT15 or
+            DeviceTags.PULSE_INPUT16 or
+            DeviceTags.PULSE_INPUT17 or
+            DeviceTags.PULSE_INPUT18 or
+            DeviceTags.PULSE_INPUT19 or
+            DeviceTags.PULSE_INPUT20 or
+            DeviceTags.PULSE_INPUT21 or
+            DeviceTags.PULSE_INPUT22 or
+            DeviceTags.PULSE_INPUT23 or
+            DeviceTags.PULSE_INPUT24 or
+            DeviceTags.PULSE_INPUT25 or
+            DeviceTags.PULSE_INPUT26 or
+            DeviceTags.PULSE_INPUT27 or
+            DeviceTags.PULSE_INPUT28 or
+            DeviceTags.PULSE_INPUT29 or
+            DeviceTags.PULSE_INPUT30 or
+            DeviceTags.PULSE_INPUT31 or
+            DeviceTags.PULSE_INPUT32 or
+            DeviceTags.A_CURRENT_INPUT1 or
+            DeviceTags.A_CURRENT_INPUT2 or
+            DeviceTags.A_CURRENT_INPUT3 or
+            DeviceTags.A_CURRENT_INPUT4 or
+            DeviceTags.A_CURRENT_INPUT5 or
+            DeviceTags.A_CURRENT_INPUT6 or
+            DeviceTags.A_CURRENT_INPUT7 or
+            DeviceTags.A_CURRENT_INPUT8 or
+            DeviceTags.A_CURRENT_INPUT9 or
+            DeviceTags.A_CURRENT_INPUT10 or
+            DeviceTags.A_CURRENT_INPUT11 or
+            DeviceTags.A_CURRENT_INPUT12 or
+            DeviceTags.A_CURRENT_INPUT13 or
+            DeviceTags.A_CURRENT_INPUT14 or
+            DeviceTags.A_CURRENT_INPUT15 or
+            DeviceTags.A_CURRENT_INPUT16 or
+            DeviceTags.A_CURRENT_INPUT17 or
+            DeviceTags.A_CURRENT_INPUT18 or
+            DeviceTags.A_CURRENT_INPUT19 or
+            DeviceTags.A_CURRENT_INPUT20 or
+            DeviceTags.A_CURRENT_INPUT21 or
+            DeviceTags.A_CURRENT_INPUT22 or
+            DeviceTags.A_CURRENT_INPUT23 or
+            DeviceTags.A_CURRENT_INPUT24 or
+            DeviceTags.A_CURRENT_INPUT25 or
+            DeviceTags.A_CURRENT_INPUT26 or
+            DeviceTags.A_CURRENT_INPUT27 or
+            DeviceTags.A_CURRENT_INPUT28 or
+            DeviceTags.A_CURRENT_INPUT29 or
+            DeviceTags.A_CURRENT_INPUT30 or
+            DeviceTags.A_CURRENT_INPUT31 or
+            DeviceTags.A_CURRENT_INPUT32 or
+            DeviceTags.A_VOLTAGE_INPUT1 or
+            DeviceTags.A_VOLTAGE_INPUT2 or
+            DeviceTags.A_VOLTAGE_INPUT3 or
+            DeviceTags.A_VOLTAGE_INPUT4 or
+            DeviceTags.A_VOLTAGE_INPUT5 or
+            DeviceTags.A_VOLTAGE_INPUT6 or
+            DeviceTags.A_VOLTAGE_INPUT7 or
+            DeviceTags.A_VOLTAGE_INPUT8 or
+            DeviceTags.A_VOLTAGE_INPUT9 or
+            DeviceTags.A_VOLTAGE_INPUT10 or
+            DeviceTags.A_VOLTAGE_INPUT11 or
+            DeviceTags.A_VOLTAGE_INPUT12 or
+            DeviceTags.A_VOLTAGE_INPUT13 or
+            DeviceTags.A_VOLTAGE_INPUT14 or
+            DeviceTags.A_VOLTAGE_INPUT15 or
+            DeviceTags.A_VOLTAGE_INPUT16 or
+            DeviceTags.A_VOLTAGE_INPUT17 or
+            DeviceTags.A_VOLTAGE_INPUT18 or
+            DeviceTags.A_VOLTAGE_INPUT19 or
+            DeviceTags.A_VOLTAGE_INPUT20 or
+            DeviceTags.A_VOLTAGE_INPUT21 or
+            DeviceTags.A_VOLTAGE_INPUT22 or
+            DeviceTags.A_VOLTAGE_INPUT23 or
+            DeviceTags.A_VOLTAGE_INPUT24 or
+            DeviceTags.A_VOLTAGE_INPUT25 or
+            DeviceTags.A_VOLTAGE_INPUT26 or
+            DeviceTags.A_VOLTAGE_INPUT27 or
+            DeviceTags.A_VOLTAGE_INPUT28 or
+            DeviceTags.A_VOLTAGE_INPUT29 or
+            DeviceTags.A_VOLTAGE_INPUT30 or
+            DeviceTags.A_VOLTAGE_INPUT31 or
+            DeviceTags.A_VOLTAGE_INPUT32 => true,
+            _ => false
+        };
+    }
+
     /// <summary>
     /// Returns tag associated to given alias string
     /// </summary>

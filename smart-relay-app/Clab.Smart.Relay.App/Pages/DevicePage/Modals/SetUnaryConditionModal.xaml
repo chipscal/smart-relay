@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Clab.Smart.Relay.App.SetDeviceProp"
+             x:Class="Clab.Smart.Relay.App.SetUnaryConditionModal"
              xmlns:app="clr-namespace:Clab.Smart.Relay.App"
              xmlns:common="clr-namespace:Clab.Smart.Relay.App.Common">
 
@@ -12,21 +12,34 @@
     </ContentPage.Resources>
 
     <ScrollView x:Name="PageRoot">
-        <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*,*"> 
+        <Grid ColumnDefinitions="*,2*,*" RowDefinitions="*,*,*"> 
             <VerticalStackLayout Grid.Row="1"
                 Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}">
-                <app:DeviceHeaderView 
-                    Title="{Binding DeviceUID}" Model="SMART R1"/>
+               
                 <Label 
-                    Text="Property:" 
+                    Text="Port:" 
                     FontSize="18"
                     Margin="15,0,10,0"
                     HorizontalOptions="Start" 
                     VerticalOptions="Center" />
                 
                 <Picker 
-                    ItemsSource="{Binding AllTags}" 
-                    SelectedItem="{Binding Tag}"
+                    ItemsSource="{Binding AllInputTags}" 
+                    SelectedItem="{Binding Port}"
+                    Margin="10"
+                    ItemDisplayBinding="{Binding ., Converter={StaticResource EnumToStringConverter}}">
+                </Picker>
+
+                <Label 
+                    Text="Operator:" 
+                    FontSize="18"
+                    Margin="15,0,10,0"
+                    HorizontalOptions="Start" 
+                    VerticalOptions="Center" />
+                
+                <Picker 
+                    ItemsSource="{Binding AllOperatorTags}" 
+                    SelectedItem="{Binding Operator}"
                     Margin="10"
                     ItemDisplayBinding="{Binding ., Converter={StaticResource EnumToStringConverter}}">
                 </Picker>
@@ -34,6 +47,13 @@
                 <Entry 
                     Text="{Binding Value}"
                     Placeholder="Enter value"
+                    Keyboard="Numeric"
+                    FontSize="18" 
+                    Margin="10,20,10,10"/>
+
+                <Entry 
+                    Text="{Binding Target}"
+                    Placeholder="Enter target"
                     Keyboard="Default"
                     FontSize="18" 
                     Margin="10,20,10,10"/>

@@ -6,22 +6,22 @@
     xmlns:local="clr-namespace:Clab.Smart.Relay.App"
     Title="Clab.Smart.Relay.App">
 
-    <ShellContent Shell.NavBarIsVisible="False"
+    <ShellContent Shell.NavBarIsVisible="True"
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
-    <ShellContent Shell.NavBarIsVisible="False"
+    <ShellContent Shell.NavBarIsVisible="True"
         Title="Scan"
         ContentTemplate="{DataTemplate local:ScanPage}"
         Route="ScanPage" />
 
-    <ShellContent Shell.NavBarIsVisible="False"
+    <ShellContent Shell.NavBarIsVisible="True"
         Title="Devices" 
         ContentTemplate="{DataTemplate local:DevicesPage}"
         Route="DevicesPage" />
 
-    <ShellContent Shell.NavBarIsVisible="False"
+    <ShellContent Shell.NavBarIsVisible="True"
         Title="Device" 
         ContentTemplate="{DataTemplate local:DevicePage}"
         Route="DevicePage" />
