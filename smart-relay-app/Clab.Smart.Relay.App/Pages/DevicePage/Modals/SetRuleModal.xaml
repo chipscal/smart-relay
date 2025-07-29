@@ -31,22 +31,40 @@
                     ItemDisplayBinding="{Binding ., Converter={StaticResource EnumToStringConverter}}">
                 </Picker>
 
-                <Grid ColumnDefinitions="*,0.3*">
-                    <Label Grid.Column="0"
-                            Text="Conditions:"
+                <Grid ColumnDefinitions="*,*">
+                    <Label 
+                        Text="Conditions:"
                         FontSize="20"
                         HorizontalOptions="Start"
                         VerticalOptions="Center"
                         Margin="15,5"/>
+                    
+                    <HorizontalStackLayout
+                        Grid.Column="1"
+                        HorizontalOptions="End"
+                        FlowDirection="RightToLeft">
 
-                    <ImageButton Grid.Column="1"
-                                HorizontalOptions="End"
-                                Source="plus_button_primary.png"
-                                Margin="05"
+                        <ImageButton 
+                                    Source="plus_button_primary.png"
+                                    Margin="10,5"
+                                    HeightRequest="10"
+                                    CornerRadius="20"
+                                    Clicked="OnAddConditionClicked">
+                        </ImageButton>
+
+                        <ImageButton x:Name="DeleteButton"
+                                Source="trash_button_primary.png"
+                                Margin="10,5"
                                 HeightRequest="10"
                                 CornerRadius="20"
-                                Clicked="OnAddConditionClicked">
-                    </ImageButton>
+                                Padding="6"
+                                Clicked="OnDeleteConditionClicked">
+                        </ImageButton>
+
+
+                    </HorizontalStackLayout>
+
+                    
                 </Grid>
 
                 <CollectionView x:Name="ConditionsCollection"

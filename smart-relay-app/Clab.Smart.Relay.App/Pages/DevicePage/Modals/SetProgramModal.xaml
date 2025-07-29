@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Clab.Smart.Relay.App.SetProgramModal"
+             xmlns:app="clr-namespace:Clab.Smart.Relay.App"
+             xmlns:common="clr-namespace:Clab.Smart.Relay.App.Common">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <common:EnumToStringConverter x:Key="EnumToStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView x:Name="PageRoot">
+        <Grid ColumnDefinitions="*,1*,*" RowDefinitions="*,*,*"> 
+            <VerticalStackLayout Grid.Row="1"
+                Grid.Column="{OnIdiom Phone=0, Tablet=1, Desktop=1}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}">
+                <app:DeviceHeaderView 
+                    Title="{Binding DeviceUID}" Model="SMART R1"/>
+                
+                <Label 
+                    Text="Start date:" 
+                    FontSize="18"
+                    Margin="15,0,10,0"
+                    HorizontalOptions="Start" 
+                    VerticalOptions="Center" />
+                
+                <DatePicker MinimumDate="{Binding MinDate}"
+                    MaximumDate="{Binding MaxDate}"
+                    Date="{Binding StartDate}" 
+                    Margin="10,0" 
+                    FontSize="{OnIdiom Phone=20, Tablet=22, Desktop=22}"
+                    HorizontalOptions="End" />
+
+                <Label 
+                    Text="End date:" 
+                    FontSize="18"
+                    Margin="15,0,10,0"
+                    HorizontalOptions="Start" 
+                    VerticalOptions="Center" />
+                
+                <DatePicker MinimumDate="{Binding StartDate}"
+                    MaximumDate="{Binding MaxDate}"
+                    Date="{Binding EndDate}" 
+                    Margin="10,0" 
+                    FontSize="{OnIdiom Phone=20, Tablet=22, Desktop=22}"
+                    HorizontalOptions="End" />
+
+                <Label 
+                    Text="Start time:" 
+                    FontSize="18"
+                    Margin="15,0,10,0"
+                    HorizontalOptions="Start" 
+                    VerticalOptions="Center" />
+
+                <TimePicker Time="{Binding StartTime}"
+                    Margin="10,0" 
+                    FontSize="{OnIdiom Phone=20, Tablet=22, Desktop=22}"
+                    HorizontalOptions="End" />
+
+                <Entry 
+                    Text="{Binding Duration}"
+                    Placeholder="Enter duration (seconds)"
+                    Keyboard="Numeric"
+                    FontSize="18" 
+                    Margin="10,5"/>
+
+                <Entry 
+                    Text="{Binding Idle}"
+                    Placeholder="Enter idle time (seconds)"
+                    Keyboard="Numeric"
+                    FontSize="18" 
+                    Margin="10,5"/>
+
+                <Grid ColumnDefinitions="*,*">
+                    <Label Grid.Column="0"
+                            Text="Outputs:"
+                        FontSize="20"
+                        HorizontalOptions="Start"
+                        VerticalOptions="Center"
+                        Margin="10,5"/>
+                    
+                    <HorizontalStackLayout
+                        Grid.Column="1"
+                        HorizontalOptions="End"
+                        FlowDirection="RightToLeft" > 
+                        
+                        <ImageButton 
+                                Source="plus_button_primary.png"
+                                Margin="10,5"
+                                HeightRequest="10"
+                                CornerRadius="20"
+                                Clicked="OnAddOutputClicked">
+                        </ImageButton>
+
+                        <ImageButton x:Name="DeleteButton"
+                                Source="trash_button_primary.png"
+                                Margin="0,5"
+                                HeightRequest="10"
+                                CornerRadius="20"
+                                Padding="6"
+                                Clicked="OnDeleteOutputClicked">
+                        </ImageButton>
+
+                    </HorizontalStackLayout>
+
+                </Grid>
+
+                <CollectionView x:Name="ActiveOutputsCollection"
+                        ItemsSource="{Binding ActiveOutputs}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedOutput}"
+                        Margin="10,5">
+
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="10"
+                                    Margin="5">
+                                <Label Grid.Row="0" Grid.Column="2"
+                                        Text="{Binding ., Converter={StaticResource EnumToStringConverter}}"
+                                        FontSize="{OnIdiom Phone=20, Tablet=22, Desktop=22}"
+                                        FontAttributes="Bold"
+                                        HorizontalOptions="Start"
+                                        VerticalOptions="Center"
+                                        FontAutoScalingEnabled="True"/>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Grid 
+                    RowDefinitions="*,*" ColumnDefinitions="*,0.5*,*">
+                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=0, Desktop=0}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                        Grid.Row="{OnIdiom Phone=0, Tablet=0, Desktop=0}"
+                        x:Name="CancelBtn"
+                        Text="Cancel"
+                        Margin="10"
+                        SemanticProperties.Hint="Cancel the operation"
+                        Clicked="OnCancelClicked"
+                        HorizontalOptions="Fill" />
+
+                    <Button Grid.Column="{OnIdiom Phone=0, Tablet=3, Desktop=3}" Grid.ColumnSpan="{OnIdiom Phone=3, Tablet=1, Desktop=1}"
+                        Grid.Row="{OnIdiom Phone=1, Tablet=0, Desktop=0}"
+                        x:Name="SaveBtn"
+                        Text="Save" 
+                        Margin="10"
+                        SemanticProperties.Hint="Cancel the operation"
+                        Clicked="OnSaveClicked"
+                        HorizontalOptions="Fill" />
+                </Grid>
+
+            </VerticalStackLayout>
+
+            
+        </Grid>
+    </ScrollView>
+</ContentPage>

@@ -82,6 +82,17 @@ public partial class DevicePage : ContentPage
                 Idle = TimeSpan.FromHours(5)
             }
         };
+        ProgramList.OnAddProgramClicked = async () =>
+        {
+            await Navigation.PushModalAsync(new SetProgramModal
+            {
+                ActiveOutputs = new ObservableCollection<DeviceTags>
+                {
+                    DeviceTags.RELAY1,
+                    DeviceTags.LATCH1
+                }
+            });
+        };
 
         PropertyList = new PropertyListView();
         PropertyList.DeviceProperties = new ObservableCollection<DevicePropertyInfo>

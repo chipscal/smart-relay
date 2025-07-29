@@ -102,6 +102,10 @@ public partial class SetRuleModal : ContentPage, INotifyPropertyChanged
         {
             //operation cancelled!
         }
-	}
+    }
 
+    private async void OnDeleteConditionClicked(object? sender, EventArgs e)
+    {
+    
+    }
 }
