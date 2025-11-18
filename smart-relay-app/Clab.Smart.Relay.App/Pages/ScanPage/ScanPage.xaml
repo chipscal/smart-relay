@@ -39,12 +39,12 @@
                                             HorizontalOptions="Start" 
                                             VerticalOptions="Center" />
 
-                                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="1" Text="{Binding Address}" 
+                                        <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="1" Text="{Binding Host}" 
                                             FontSize="18"
                                             HorizontalOptions="Start" 
                                             VerticalOptions="Center" />
                                         
-                                        <Label Text=":" Grid.Row="1" Grid.Column="1"
+                                        <Label Text="" Grid.Row="1" Grid.Column="1"
                                             FontSize="18"
                                             HorizontalOptions="Center" 
                                             VerticalOptions="Center"/> 

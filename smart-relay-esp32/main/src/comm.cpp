@@ -352,6 +352,9 @@ namespace clab::plugins {
 
 
                     if (strcmp(rx_buffer, "HELLO!") == 0) {
+                        
+                        ESP_LOGI(TAG, "Discovery request received!");
+
 
                         uint32_t address;
                         esp_err_t result = clab::iot_services::wifi_get_ip(&address);
@@ -481,7 +484,7 @@ namespace clab::plugins {
             rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
             ESP_LOGI(TAG, "Received:\n %s", rx_buffer);
             
-
+            //TODO: complete parse
         }
 
         return ESP_OK;

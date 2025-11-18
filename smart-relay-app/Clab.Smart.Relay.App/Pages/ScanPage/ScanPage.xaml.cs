@@ -1,18 +1,36 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Clab.Smart.Relay.App;
 
 public partial class ScanPage : ContentPage
 {
 
-	public class BrokerInfo
-	{
-		public string Name { get; set; }
-		public string Address { get; set; }
-		public int Port { get; set; }
-	}
-
 	public ObservableCollection<BrokerInfo> Items { get; set; }
+	
+
+	// public static readonly BindableProperty ItemsProperty =
+    //     BindableProperty.Create(
+    //         nameof(Items),
+    //         typeof(ObservableCollection<BrokerInfo>),
+    //         typeof(PropertyListView),
+    //         default(ObservableCollection<BrokerInfo>),
+    //         propertyChanged: OnItemsChanged);
+
+    // public ObservableCollection<BrokerInfo> Items
+    // {
+    //     get => (ObservableCollection<BrokerInfo>)GetValue(ItemsProperty);
+    //     set => SetValue(ItemsProperty, value);
+    // }
+
+    // private static void OnItemsChanged(BindableObject bindable, object oldValue, object newValue)
+    // {
+    //     if (bindable is ScanPage control && newValue is ObservableCollection<BrokerInfo> newCollection)
+    //     {
+    //         control.BrokerCollectionView.ItemsSource = newCollection;
+    //     }
+    // }
 
 
 	public BrokerInfo SelectedBroker
@@ -25,30 +43,23 @@ public partial class ScanPage : ContentPage
 	{
 		InitializeComponent();
 
-		Items = new ObservableCollection<BrokerInfo>
-		{
-			new BrokerInfo
-			{
-				Name = "prova",
-				Address = "192.168.1.1",
-				Port = 21354
-			},
-			new BrokerInfo
-			{
-				Name = "prova2",
-				Address = "192.168.1.3",
-				Port = 21354
-			},
-			new BrokerInfo
-			{
-				Name = "prova3",
-				Address = "192.168.1.4",
-				Port = 21354
-			}
-		};
-
+		Items = new ObservableCollection<BrokerInfo>();
 		BindingContext = this;
 	}
+
+	protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+       	using (var discoveryClient = new DiscoveryServiceClient())
+		{
+			var brokers = await discoveryClient.FindBrokers(600, CancellationToken.None); 
+			Items.Clear();
+			foreach(var broker in brokers.OrderBy(b => b.Name))
+				Items.Add(broker);
+			// Items = new ObservableCollection<BrokerInfo>(brokers);
+		}
+    }
 
 	private async void OnConnectClicked(object? sender, EventArgs e)
 	{
