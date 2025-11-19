@@ -10,13 +10,12 @@ namespace Clab.Smart.Relay.App;
 public class Device(MQTTClient mqttClient)
 {
     
-    public const string TelemTopic          = "/dev/+/telem";
-    public const string PropValueTopic      = "/dev/+/prop/+/value";
-    public const string CmdAckTopic         = "/dev/+/cmd/+/ack";
-    public const string CmdNAckTopic        = "/dev/+/cmd/+/nack";
-
-    public const string PropDesiredFormat   = "/dev/{0}/prop/{1}/desired";
-    public const string CmdExecFormat       = "/dev/{0}/cmd/{1}/exec";
+    public const string TelemTopicFormat        = "/dev/{0}/telem";
+    public const string PropValueTopicFormat    = "/dev/{0}/prop/{1}/value";
+    public const string CmdAckTopicFormat       = "/dev/{0}/cmd/{1}/ack";
+    public const string CmdNAckTopicFormat      = "/dev/{0}/cmd/{1}/nack";
+    public const string PropDesiredTopicFormat  = "/dev/{0}/prop/{1}/desired";
+    public const string CmdExecTopicFormat      = "/dev/{0}/cmd/{1}/exec";
 
 
     public string   DeviceUID       { get; set; }
@@ -30,23 +29,39 @@ public class Device(MQTTClient mqttClient)
 
     private  MQTTClient _mqttClient = mqttClient;
 
+    public async Task EnableSelfRefresh()
+    {
+        var telemTopic = string.Format(TelemTopicFormat, DeviceUID);
+        await _mqttClient.SubscribeAsync(telemTopic, RefreshFromTelemetryHandle);
+    }
+
+    private async Task RefreshFromTelemetryHandle(string topic, ArraySegment<byte> payload)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RefreshFromTelemetry(ArraySegment<byte> payload)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task RestartAsync()
     {
-        var topic = string.Format(CmdExecFormat, DeviceUID, "restart");
+        var topic = string.Format(CmdExecTopicFormat, DeviceUID, "restart");
         
         await _mqttClient.EnqueueMessageAsync(topic, GenerateMQTTCommandPayload(null));
     }
 
     public async Task HardRestartAsync()
     {
-        var topic = string.Format(CmdExecFormat, DeviceUID, "restart-hard");
+        var topic = string.Format(CmdExecTopicFormat, DeviceUID, "restart-hard");
         
         await _mqttClient.EnqueueMessageAsync(topic, GenerateMQTTCommandPayload(null));
     }
 
     public async Task RefreshLatchAsync()
     {
-        var topic = string.Format(CmdExecFormat, DeviceUID, "refresh");
+        var topic = string.Format(CmdExecTopicFormat, DeviceUID, "refresh");
         
         await _mqttClient.EnqueueMessageAsync(topic, GenerateMQTTCommandPayload(null));
     }
