@@ -325,8 +325,10 @@ namespace clab::iot_services
         /// @note No copy is made.
         dev_status_t(const uint8_t *buffer, size_t buffer_size);
 
-        // HREV|SREV|n_curr[0:3],n_volt[4:7]|n_pulse[0:3],n_temperature[4:7]|
-        // Latch0|Latch1|Latch2|Latch3|Relay0|Relay1|Relay2|Relay3 (bit mask)
+        // HREV|SREV|n_curr[0:3],n_volt[4:7]|n_pulse[0:3],n_temperature[4:7]
+        // n_latch|n_relay|n_digital|reserved[0:7]
+        // Latch0|Latch1|Latch2|Latch3 (bit mask)
+        // Relay0|Relay1|Relay2|Relay3 (bit mask)
         // Digital0|Digital1|Digital2|Digital3 (bit mask)
         // Current0_LSB|Current0_MSB|...|CurrentN_LSB|CurrentN_MSB
         // Voltage0_LSB|Voltage0_MSB|...|VoltageN_LSB|VoltageN_MSB
@@ -334,11 +336,11 @@ namespace clab::iot_services
         // Temperature0_LSB|Temperature0_MSB|...|TemperatureN_LSB|TemperatureN_MSB
 
         inline bool        is_valid() {
-            if (_data_size < 16) //HREV to Digital3
+            if (_data_size < 20) //HREV to Digital3
                 return false;
 
             // Now size functions are safe!
-            if (_data_size < 16 + (n_curr() + n_volt() + n_pulse() + n_temperature()) * sizeof(uint16_t))
+            if (_data_size < 20 + (n_curr() + n_volt() + n_pulse() + n_temperature()) * sizeof(uint16_t))
                 return false;
 
             return true;
@@ -372,9 +374,25 @@ namespace clab::iot_services
         inline uint8_t     n_pulse() {
             return (_data_buffer[3] & 0xF0) >> 4;
         }
+
         /// @brief Number of installed temperature sensor.
         inline uint8_t     n_temperature() {
             return _data_buffer[3] & 0x0F;
+        }
+
+        /// @brief Number of installed latch output.
+        inline uint8_t     n_latch() {
+            return _data_buffer[4] & 0xFF;
+        }
+
+        /// @brief Number of installed latch output.
+        inline uint8_t     n_relay() {
+            return _data_buffer[5] & 0xFF;
+        }
+
+        /// @brief Number of installed latch output.
+        inline uint8_t     n_digital() {
+            return _data_buffer[6] & 0xFF;
         }
         
         /// @brief Latch output status.
@@ -382,7 +400,7 @@ namespace clab::iot_services
         /// @return true if active
         inline bool        latch_status(int idx) {
             uint32_t mask;
-            memcpy(&mask, _data_buffer + 4, sizeof(uint32_t));
+            memcpy(&mask, _data_buffer + 8, sizeof(uint32_t));
             if (!is_little_endian())
                 mask = swap_uint32(mask);
 
@@ -394,7 +412,7 @@ namespace clab::iot_services
         /// @return true if active
         inline bool        relay_status(int idx){
             uint32_t mask;
-            memcpy(&mask, _data_buffer + 8, sizeof(uint32_t));
+            memcpy(&mask, _data_buffer + 12, sizeof(uint32_t));
             if (!is_little_endian())
                 mask = swap_uint32(mask);
 
@@ -406,7 +424,7 @@ namespace clab::iot_services
         /// @return true if logically high
         inline bool        digital_status(int idx){
             uint32_t mask;
-            memcpy(&mask, _data_buffer + 12, sizeof(uint32_t));
+            memcpy(&mask, _data_buffer + 16, sizeof(uint32_t));
             if (!is_little_endian())
                 mask = swap_uint32(mask);
 
@@ -417,7 +435,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return mA
         inline float       current_value(int idx) {
-            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * idx;
+            const uint8_t *base_address = _data_buffer + 20 + sizeof(uint16_t) * idx;
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -431,7 +449,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return V
         inline float       voltage_value(int idx) {
-            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + idx);
+            const uint8_t *base_address = _data_buffer + 20 + sizeof(uint16_t) * (n_curr() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -445,7 +463,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return pulse count
         inline uint16_t    pulse_value(int idx) {
-            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + idx);
+            const uint8_t *base_address = _data_buffer + 20 + sizeof(uint16_t) * (n_curr() + n_volt() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));
@@ -459,7 +477,7 @@ namespace clab::iot_services
         /// @param idx of the input
         /// @return K
         inline float       temperature_value(int idx) {
-            const uint8_t *base_address = _data_buffer + 16 + sizeof(uint16_t) * (n_curr() + n_volt() + n_pulse() + idx);
+            const uint8_t *base_address = _data_buffer + 20 + sizeof(uint16_t) * (n_curr() + n_volt() + n_pulse() + idx);
 
             uint16_t value;
             memcpy(&value, base_address, sizeof(uint16_t));

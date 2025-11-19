@@ -149,10 +149,10 @@ extern "C" void app_main(void)
     char topic_buffer[64];
     sprintf(topic_buffer, "/dev/%s/telem", clab::plugins::comm_get_device_uid());
     
-    uint8_t telem_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::io_buffer_report_size)];
+    uint8_t telem_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::io_buffer_report_size + sizeof(MODEL_NAME))];
     
     size_t  encoded_size;
-    uint8_t encoded_buffer[clab::iot_services::alligned_big_enough(clab::iot_services::io_buffer_report_size * 2)];
+    uint8_t encoded_buffer[clab::iot_services::alligned_big_enough((clab::iot_services::io_buffer_report_size + sizeof(MODEL_NAME)) * 2)];
 
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(CONFIG_MAIN_LOOP_INTERVAL_MILLIS));
@@ -160,8 +160,12 @@ extern "C" void app_main(void)
         // ------------------------- Start Telemetry publish
         esp_err_t result = clab::iot_services::io_buffer_report(telem_buffer, sizeof(telem_buffer), true);
         if (result == ESP_OK) {
+
+            // Append model name
+            strcpy((char *)(telem_buffer + clab::iot_services::io_buffer_report_size), MODEL_NAME);
+
             if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
-                    &encoded_size, telem_buffer, clab::iot_services::io_buffer_report_size) < 0) {
+                    &encoded_size, telem_buffer, clab::iot_services::io_buffer_report_size + sizeof(MODEL_NAME)) < 0) {
                 ESP_LOGE(MAIN_APP_TAG, "Unable to byte64 encode telemetry, too big!");
                 return;
             }

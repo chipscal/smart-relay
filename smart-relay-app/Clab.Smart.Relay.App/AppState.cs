@@ -5,13 +5,8 @@ namespace Clab.Smart.Relay.App;
 
 public class AppState
 {
-    
-    public const string TelemTopic          = "/dev/+/telem";
-    public const string PropDesiredTopic    = "/dev/+/prop/+/desired";
-    public const string PropValueTopic      = "/dev/+/prop/+/value";
-    public const string CmdExecTopic        = "/dev/+/cmd/+/exec";
-    public const string CmdAckTopic         = "/dev/+/cmd/+/ack";
-    public const string CmdNAckTopic        = "/dev/+/cmd/+/nack";
+
+    public IEnumerable<Device>      KnownDevices    {get; set;}
 
 
     private MQTTClient  _mqttClient = null;
@@ -32,10 +27,10 @@ public class AppState
                         Password = password
                     });
 
-            await _mqttClient.SubscribeAsync(TelemTopic,      TelemetryCallback);
-            await _mqttClient.SubscribeAsync(PropValueTopic,  PropertyValueCallback);
-            await _mqttClient.SubscribeAsync(CmdAckTopic,     CommandAckNackCallback);
-            await _mqttClient.SubscribeAsync(CmdNAckTopic,    CommandAckNackCallback);
+            await _mqttClient.SubscribeAsync(Device.TelemTopic,      TelemetryCallback);
+            await _mqttClient.SubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
+            await _mqttClient.SubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
+            await _mqttClient.SubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
             
             return true;
         }
@@ -47,10 +42,10 @@ public class AppState
     {
         if (_mqttClient != null)
         {
-            await _mqttClient.UnSubscribeAsync(TelemTopic,      TelemetryCallback);
-            await _mqttClient.UnSubscribeAsync(PropValueTopic,  PropertyValueCallback);
-            await _mqttClient.UnSubscribeAsync(CmdAckTopic,     CommandAckNackCallback);
-            await _mqttClient.UnSubscribeAsync(CmdNAckTopic,    CommandAckNackCallback);
+            await _mqttClient.UnSubscribeAsync(Device.TelemTopic,      TelemetryCallback);
+            await _mqttClient.UnSubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
+            await _mqttClient.UnSubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
+            await _mqttClient.UnSubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
 
             await _mqttClient.CloseAsync();
 

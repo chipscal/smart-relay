@@ -468,9 +468,9 @@ namespace clab::iot_services {
         
         memset(buffer, 0U, buffer_size);
             
-        uint8_t *a_curr_base_addr = buffer + 4 * sizeof(uint32_t);
+        uint8_t *a_curr_base_addr = buffer + 5 * sizeof(uint32_t);
         
-        uint8_t *a_volt_base_addr = a_curr_base_addr + a_current_in.size()  * sizeof(uint16_t);
+        uint8_t *a_volt_base_addr = a_curr_base_addr + a_current_in.size() * sizeof(uint16_t);
         
         uint8_t *pulse_base_addr = a_volt_base_addr + a_volt_in.size() * sizeof(uint16_t);
 
@@ -484,12 +484,22 @@ namespace clab::iot_services {
         static_assert(io_n_voltage < 16);
         static_assert(io_n_pulse < 16);
         static_assert(io_n_temperature < 16);
+        static_assert(io_n_latch < 256);
+        static_assert(io_n_relay < 256);
+        static_assert(io_n_digital < 256);
 
         // 1st DWORD
         buffer[0] = CONFIG_IOT_BOARD_HREV;
         buffer[1] = EDGE_SREV << 4 | EDGE_SMINOR;
         buffer[2] = io_n_current << 4 | io_n_voltage;
         buffer[3] = io_n_pulse << 4 | io_n_temperature;
+
+        // 2st DWORD
+        buffer[4] = io_n_latch;
+        buffer[5] = io_n_relay;
+        buffer[6] = io_n_digital;
+        buffer[7] = 0U;
+
 
         xSemaphoreTake(io_mutex, portMAX_DELAY);
 
@@ -501,7 +511,7 @@ namespace clab::iot_services {
         }
         if (!clab::iot_services::is_little_endian())
             latch = clab::iot_services::swap_uint32(latch);
-        memcpy(&(buffer[4]), &latch, sizeof(uint32_t));
+        memcpy(&(buffer[8]), &latch, sizeof(uint32_t));
 
         // Relay
         uint32_t relay = 0;
@@ -511,7 +521,7 @@ namespace clab::iot_services {
         }
         if (!clab::iot_services::is_little_endian())
             relay = clab::iot_services::swap_uint32(relay);
-        memcpy(&(buffer[8]), &relay, sizeof(uint32_t));
+        memcpy(&(buffer[12]), &relay, sizeof(uint32_t));
 
         xSemaphoreGive(io_mutex);
 
@@ -523,7 +533,7 @@ namespace clab::iot_services {
         }
         if (!clab::iot_services::is_little_endian())
             digital = clab::iot_services::swap_uint32(digital);
-        memcpy(&(buffer[12]), &digital, sizeof(uint32_t));
+        memcpy(&(buffer[16]), &digital, sizeof(uint32_t));
 
         // Analog current inputs
         for (int k = 0; k < a_current_in.size(); k++) {

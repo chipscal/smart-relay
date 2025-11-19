@@ -8,30 +8,9 @@ public partial class ScanPage : ContentPage
 {
 
 	public ObservableCollection<BrokerInfo> Items { get; set; }
+
+	IDispatcherTimer 		_timer;
 	
-
-	// public static readonly BindableProperty ItemsProperty =
-    //     BindableProperty.Create(
-    //         nameof(Items),
-    //         typeof(ObservableCollection<BrokerInfo>),
-    //         typeof(PropertyListView),
-    //         default(ObservableCollection<BrokerInfo>),
-    //         propertyChanged: OnItemsChanged);
-
-    // public ObservableCollection<BrokerInfo> Items
-    // {
-    //     get => (ObservableCollection<BrokerInfo>)GetValue(ItemsProperty);
-    //     set => SetValue(ItemsProperty, value);
-    // }
-
-    // private static void OnItemsChanged(BindableObject bindable, object oldValue, object newValue)
-    // {
-    //     if (bindable is ScanPage control && newValue is ObservableCollection<BrokerInfo> newCollection)
-    //     {
-    //         control.BrokerCollectionView.ItemsSource = newCollection;
-    //     }
-    // }
-
 
 	public BrokerInfo SelectedBroker
 	{
@@ -43,6 +22,10 @@ public partial class ScanPage : ContentPage
 	{
 		InitializeComponent();
 
+		_timer = Dispatcher.CreateTimer();
+        _timer.Interval = TimeSpan.FromSeconds(15);
+		_timer.Tick += async (s, e) => await ScanBrokers();
+
 		Items = new ObservableCollection<BrokerInfo>();
 		BindingContext = this;
 	}
@@ -51,14 +34,38 @@ public partial class ScanPage : ContentPage
     {
         base.OnAppearing();
 
-       	using (var discoveryClient = new DiscoveryServiceClient())
+		await ScanBrokers();
+       	_timer.Start();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+		_timer.Stop();
+    }
+
+	private async Task ScanBrokers()
+    {
+		var oldSelectedBroker =  (BrokerInfo)BrokerCollectionView.SelectedItem;
+
+        using (var discoveryClient = new DiscoveryServiceClient())
 		{
 			var brokers = await discoveryClient.FindBrokers(600, CancellationToken.None); 
 			Items.Clear();
 			foreach(var broker in brokers.OrderBy(b => b.Name))
 				Items.Add(broker);
-			// Items = new ObservableCollection<BrokerInfo>(brokers);
 		}
+
+		if (oldSelectedBroker != null)
+        {
+			var newSelectedBroker = Items.Where(b => b.Name == oldSelectedBroker.Name).SingleOrDefault();
+			if (newSelectedBroker != null)
+            {
+                BrokerCollectionView.SelectedItem = newSelectedBroker;
+            }
+        }
+
     }
 
 	private async void OnConnectClicked(object? sender, EventArgs e)

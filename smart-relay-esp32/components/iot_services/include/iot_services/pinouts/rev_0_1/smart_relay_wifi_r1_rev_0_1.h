@@ -1,6 +1,7 @@
 #pragma once
 
 // Smart Relay WiFi R1
+#define MODEL_NAME      "Smart R1"
 
 // ----------------------------- You can conveniently define pin names here:
 #define SYS_LED         2

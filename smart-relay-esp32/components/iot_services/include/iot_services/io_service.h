@@ -28,6 +28,7 @@ namespace clab::iot_services
     /// @brief Report buffer required minimum size.
     constexpr unsigned int      io_buffer_report_size { 
         sizeof(uint32_t) + // HREV|SREV|n_curr[0:3],n_volt[4:7]|n_pulse[0:3],n_temperature[4:7]|
+        sizeof(uint32_t) + // n_latch|n_relay|n_digital|reserved[0:7]
         2 * sizeof(uint32_t) + // Latch0|Latch1|Latch2|Latch3|Relay0|Relay1|Relay2|Relay3 (bit mask)
         sizeof(uint32_t) + // Digital0|Digital1|Digital2|Digital3 (bit mask)
         io_n_current * sizeof(uint16_t) + 
