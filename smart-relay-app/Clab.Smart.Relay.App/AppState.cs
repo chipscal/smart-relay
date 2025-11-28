@@ -27,10 +27,10 @@ public class AppState
                         Password = password
                     });
 
-            await _mqttClient.SubscribeAsync(Device.TelemTopic,      TelemetryCallback);
-            await _mqttClient.SubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
-            await _mqttClient.SubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
-            await _mqttClient.SubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
+            // await _mqttClient.SubscribeAsync(Device.TelemTopic,      TelemetryCallback);
+            // await _mqttClient.SubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
+            // await _mqttClient.SubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
+            // await _mqttClient.SubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
             
             return true;
         }
@@ -42,10 +42,10 @@ public class AppState
     {
         if (_mqttClient != null)
         {
-            await _mqttClient.UnSubscribeAsync(Device.TelemTopic,      TelemetryCallback);
-            await _mqttClient.UnSubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
-            await _mqttClient.UnSubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
-            await _mqttClient.UnSubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
+            // await _mqttClient.UnSubscribeAsync(Device.TelemTopic,      TelemetryCallback);
+            // await _mqttClient.UnSubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
+            // await _mqttClient.UnSubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
+            // await _mqttClient.UnSubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
 
             await _mqttClient.CloseAsync();
 

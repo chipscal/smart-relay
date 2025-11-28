@@ -147,6 +147,38 @@ public enum DeviceTags
     A_VOLTAGE_INPUT30,
     A_VOLTAGE_INPUT31,
     A_VOLTAGE_INPUT32,
+    TEMPERATURE_INPUT1,
+    TEMPERATURE_INPUT2,
+    TEMPERATURE_INPUT3,
+    TEMPERATURE_INPUT4,
+    TEMPERATURE_INPUT5,
+    TEMPERATURE_INPUT6,
+    TEMPERATURE_INPUT7,
+    TEMPERATURE_INPUT8,
+    TEMPERATURE_INPUT9,
+    TEMPERATURE_INPUT10,
+    TEMPERATURE_INPUT11,
+    TEMPERATURE_INPUT12,
+    TEMPERATURE_INPUT13,
+    TEMPERATURE_INPUT14,
+    TEMPERATURE_INPUT15,
+    TEMPERATURE_INPUT16,
+    TEMPERATURE_INPUT17,
+    TEMPERATURE_INPUT18,
+    TEMPERATURE_INPUT19,
+    TEMPERATURE_INPUT20,
+    TEMPERATURE_INPUT21,
+    TEMPERATURE_INPUT22,
+    TEMPERATURE_INPUT23,
+    TEMPERATURE_INPUT24,
+    TEMPERATURE_INPUT25,
+    TEMPERATURE_INPUT26,
+    TEMPERATURE_INPUT27,
+    TEMPERATURE_INPUT28,
+    TEMPERATURE_INPUT29,
+    TEMPERATURE_INPUT30,
+    TEMPERATURE_INPUT31,
+    TEMPERATURE_INPUT32,
     #endregion
     #region OUTPUTS
     RELAY1,
@@ -379,7 +411,70 @@ public enum DeviceTags
     LATCH_DELAYS32,
     #endregion
     #region OVERRIDE
-    OVERRIDE,
+    RELAY_OVERRIDE1,
+    RELAY_OVERRIDE2,
+    RELAY_OVERRIDE3,
+    RELAY_OVERRIDE4,
+    RELAY_OVERRIDE5,
+    RELAY_OVERRIDE6,
+    RELAY_OVERRIDE7,
+    RELAY_OVERRIDE8,
+    RELAY_OVERRIDE9,
+    RELAY_OVERRIDE10,
+    RELAY_OVERRIDE11,
+    RELAY_OVERRIDE12,
+    RELAY_OVERRIDE13,
+    RELAY_OVERRIDE14,
+    RELAY_OVERRIDE15,
+    RELAY_OVERRIDE16,
+    RELAY_OVERRIDE17,
+    RELAY_OVERRIDE18,
+    RELAY_OVERRIDE19,
+    RELAY_OVERRIDE20,
+    RELAY_OVERRIDE21,
+    RELAY_OVERRIDE22,
+    RELAY_OVERRIDE23,
+    RELAY_OVERRIDE24,
+    RELAY_OVERRIDE25,
+    RELAY_OVERRIDE26,
+    RELAY_OVERRIDE27,
+    RELAY_OVERRIDE28,
+    RELAY_OVERRIDE29,
+    RELAY_OVERRIDE30,
+    RELAY_OVERRIDE31,
+    RELAY_OVERRIDE32,
+    LATCH_OVERRIDE1,
+    LATCH_OVERRIDE2,
+    LATCH_OVERRIDE3,
+    LATCH_OVERRIDE4,
+    LATCH_OVERRIDE5,
+    LATCH_OVERRIDE6,
+    LATCH_OVERRIDE7,
+    LATCH_OVERRIDE8,
+    LATCH_OVERRIDE9,
+    LATCH_OVERRIDE10,
+    LATCH_OVERRIDE11,
+    LATCH_OVERRIDE12,
+    LATCH_OVERRIDE13,
+    LATCH_OVERRIDE14,
+    LATCH_OVERRIDE15,
+    LATCH_OVERRIDE16,
+    LATCH_OVERRIDE17,
+    LATCH_OVERRIDE18,
+    LATCH_OVERRIDE19,
+    LATCH_OVERRIDE20,
+    LATCH_OVERRIDE21,
+    LATCH_OVERRIDE22,
+    LATCH_OVERRIDE23,
+    LATCH_OVERRIDE24,
+    LATCH_OVERRIDE25,
+    LATCH_OVERRIDE26,
+    LATCH_OVERRIDE27,
+    LATCH_OVERRIDE28,
+    LATCH_OVERRIDE29,
+    LATCH_OVERRIDE30,
+    LATCH_OVERRIDE31,
+    LATCH_OVERRIDE32,
     #endregion
 }
 
@@ -531,6 +626,38 @@ public static class DevicePropertyUtils
             DeviceTags.A_VOLTAGE_INPUT30 => "v29",
             DeviceTags.A_VOLTAGE_INPUT31 => "v30",
             DeviceTags.A_VOLTAGE_INPUT32 => "v31",
+            DeviceTags.TEMPERATURE_INPUT1 => "t0",
+            DeviceTags.TEMPERATURE_INPUT2 => "t1",
+            DeviceTags.TEMPERATURE_INPUT3 => "t2",
+            DeviceTags.TEMPERATURE_INPUT4 => "t3",
+            DeviceTags.TEMPERATURE_INPUT5 => "t4",
+            DeviceTags.TEMPERATURE_INPUT6 => "t5",
+            DeviceTags.TEMPERATURE_INPUT7 => "t6",
+            DeviceTags.TEMPERATURE_INPUT8 => "t7",
+            DeviceTags.TEMPERATURE_INPUT9 => "t8",
+            DeviceTags.TEMPERATURE_INPUT10 => "t9",
+            DeviceTags.TEMPERATURE_INPUT11 => "t10",
+            DeviceTags.TEMPERATURE_INPUT12 => "t11",
+            DeviceTags.TEMPERATURE_INPUT13 => "t12",
+            DeviceTags.TEMPERATURE_INPUT14 => "t13",
+            DeviceTags.TEMPERATURE_INPUT15 => "t14",
+            DeviceTags.TEMPERATURE_INPUT16 => "t15",
+            DeviceTags.TEMPERATURE_INPUT17 => "t16",
+            DeviceTags.TEMPERATURE_INPUT18 => "t17",
+            DeviceTags.TEMPERATURE_INPUT19 => "t18",
+            DeviceTags.TEMPERATURE_INPUT20 => "t19",
+            DeviceTags.TEMPERATURE_INPUT21 => "t20",
+            DeviceTags.TEMPERATURE_INPUT22 => "t21",
+            DeviceTags.TEMPERATURE_INPUT23 => "t22",
+            DeviceTags.TEMPERATURE_INPUT24 => "t23",
+            DeviceTags.TEMPERATURE_INPUT25 => "t24",
+            DeviceTags.TEMPERATURE_INPUT26 => "t25",
+            DeviceTags.TEMPERATURE_INPUT27 => "t26",
+            DeviceTags.TEMPERATURE_INPUT28 => "t27",
+            DeviceTags.TEMPERATURE_INPUT29 => "t28",
+            DeviceTags.TEMPERATURE_INPUT30 => "t29",
+            DeviceTags.TEMPERATURE_INPUT31 => "t30",
+            DeviceTags.TEMPERATURE_INPUT32 => "t31",
             DeviceTags.RELAY1 => "r0",
             DeviceTags.RELAY2 => "r1",
             DeviceTags.RELAY3 => "r2",
@@ -755,7 +882,70 @@ public static class DevicePropertyUtils
             DeviceTags.LATCH_DELAYS30 => "ld29",
             DeviceTags.LATCH_DELAYS31 => "ld30",
             DeviceTags.LATCH_DELAYS32 => "ld31",
-            DeviceTags.OVERRIDE => "over",
+            DeviceTags.RELAY_OVERRIDE1 => "ro0",
+            DeviceTags.RELAY_OVERRIDE2 => "ro1",
+            DeviceTags.RELAY_OVERRIDE3 => "ro2",
+            DeviceTags.RELAY_OVERRIDE4 => "ro3",
+            DeviceTags.RELAY_OVERRIDE5 => "ro4",
+            DeviceTags.RELAY_OVERRIDE6 => "ro5",
+            DeviceTags.RELAY_OVERRIDE7 => "ro6",
+            DeviceTags.RELAY_OVERRIDE8 => "ro7",
+            DeviceTags.RELAY_OVERRIDE9 => "ro8",
+            DeviceTags.RELAY_OVERRIDE10 => "ro9",
+            DeviceTags.RELAY_OVERRIDE11 => "ro10",
+            DeviceTags.RELAY_OVERRIDE12 => "ro11",
+            DeviceTags.RELAY_OVERRIDE13 => "ro12",
+            DeviceTags.RELAY_OVERRIDE14 => "ro13",
+            DeviceTags.RELAY_OVERRIDE15 => "ro14",
+            DeviceTags.RELAY_OVERRIDE16 => "ro15",
+            DeviceTags.RELAY_OVERRIDE17 => "ro16",
+            DeviceTags.RELAY_OVERRIDE18 => "ro17",
+            DeviceTags.RELAY_OVERRIDE19 => "ro18",
+            DeviceTags.RELAY_OVERRIDE20 => "ro19",
+            DeviceTags.RELAY_OVERRIDE21 => "ro20",
+            DeviceTags.RELAY_OVERRIDE22 => "ro21",
+            DeviceTags.RELAY_OVERRIDE23 => "ro22",
+            DeviceTags.RELAY_OVERRIDE24 => "ro23",
+            DeviceTags.RELAY_OVERRIDE25 => "ro24",
+            DeviceTags.RELAY_OVERRIDE26 => "ro25",
+            DeviceTags.RELAY_OVERRIDE27 => "ro26",
+            DeviceTags.RELAY_OVERRIDE28 => "ro27",
+            DeviceTags.RELAY_OVERRIDE29 => "ro28",
+            DeviceTags.RELAY_OVERRIDE30 => "ro29",
+            DeviceTags.RELAY_OVERRIDE31 => "ro30",
+            DeviceTags.RELAY_OVERRIDE32 => "ro31",
+            DeviceTags.LATCH_OVERRIDE1 => "lo0",
+            DeviceTags.LATCH_OVERRIDE2 => "lo1",
+            DeviceTags.LATCH_OVERRIDE3 => "lo2",
+            DeviceTags.LATCH_OVERRIDE4 => "lo3",
+            DeviceTags.LATCH_OVERRIDE5 => "lo4",
+            DeviceTags.LATCH_OVERRIDE6 => "lo5",
+            DeviceTags.LATCH_OVERRIDE7 => "lo6",
+            DeviceTags.LATCH_OVERRIDE8 => "lo7",
+            DeviceTags.LATCH_OVERRIDE9 => "lo8",
+            DeviceTags.LATCH_OVERRIDE10 => "lo9",
+            DeviceTags.LATCH_OVERRIDE11 => "lo10",
+            DeviceTags.LATCH_OVERRIDE12 => "lo11",
+            DeviceTags.LATCH_OVERRIDE13 => "lo12",
+            DeviceTags.LATCH_OVERRIDE14 => "lo13",
+            DeviceTags.LATCH_OVERRIDE15 => "lo14",
+            DeviceTags.LATCH_OVERRIDE16 => "lo15",
+            DeviceTags.LATCH_OVERRIDE17 => "lo16",
+            DeviceTags.LATCH_OVERRIDE18 => "lo17",
+            DeviceTags.LATCH_OVERRIDE19 => "lo18",
+            DeviceTags.LATCH_OVERRIDE20 => "lo19",
+            DeviceTags.LATCH_OVERRIDE21 => "lo20",
+            DeviceTags.LATCH_OVERRIDE22 => "lo21",
+            DeviceTags.LATCH_OVERRIDE23 => "lo22",
+            DeviceTags.LATCH_OVERRIDE24 => "lo23",
+            DeviceTags.LATCH_OVERRIDE25 => "lo24",
+            DeviceTags.LATCH_OVERRIDE26 => "lo25",
+            DeviceTags.LATCH_OVERRIDE27 => "lo26",
+            DeviceTags.LATCH_OVERRIDE28 => "lo27",
+            DeviceTags.LATCH_OVERRIDE29 => "lo28",
+            DeviceTags.LATCH_OVERRIDE30 => "lo29",
+            DeviceTags.LATCH_OVERRIDE31 => "lo30",
+            DeviceTags.LATCH_OVERRIDE32 => "lo31",
             _ => throw new ArgumentOutOfRangeException(tag.ToString())
         };
     }
@@ -860,7 +1050,70 @@ public static class DevicePropertyUtils
             DeviceTags.LATCH_DELAYS30 or
             DeviceTags.LATCH_DELAYS31 or
             DeviceTags.LATCH_DELAYS32 or
-            DeviceTags.OVERRIDE => true,
+            DeviceTags.RELAY_OVERRIDE1 or
+            DeviceTags.RELAY_OVERRIDE2 or
+            DeviceTags.RELAY_OVERRIDE3 or
+            DeviceTags.RELAY_OVERRIDE4 or
+            DeviceTags.RELAY_OVERRIDE5 or
+            DeviceTags.RELAY_OVERRIDE6 or
+            DeviceTags.RELAY_OVERRIDE7 or
+            DeviceTags.RELAY_OVERRIDE8 or
+            DeviceTags.RELAY_OVERRIDE9 or
+            DeviceTags.RELAY_OVERRIDE10 or
+            DeviceTags.RELAY_OVERRIDE11 or
+            DeviceTags.RELAY_OVERRIDE12 or
+            DeviceTags.RELAY_OVERRIDE13 or
+            DeviceTags.RELAY_OVERRIDE14 or
+            DeviceTags.RELAY_OVERRIDE15 or
+            DeviceTags.RELAY_OVERRIDE16 or
+            DeviceTags.RELAY_OVERRIDE17 or
+            DeviceTags.RELAY_OVERRIDE18 or
+            DeviceTags.RELAY_OVERRIDE19 or
+            DeviceTags.RELAY_OVERRIDE20 or
+            DeviceTags.RELAY_OVERRIDE21 or
+            DeviceTags.RELAY_OVERRIDE22 or
+            DeviceTags.RELAY_OVERRIDE23 or
+            DeviceTags.RELAY_OVERRIDE24 or
+            DeviceTags.RELAY_OVERRIDE25 or
+            DeviceTags.RELAY_OVERRIDE26 or
+            DeviceTags.RELAY_OVERRIDE27 or
+            DeviceTags.RELAY_OVERRIDE28 or
+            DeviceTags.RELAY_OVERRIDE29 or
+            DeviceTags.RELAY_OVERRIDE30 or
+            DeviceTags.RELAY_OVERRIDE31 or
+            DeviceTags.RELAY_OVERRIDE32 or
+            DeviceTags.LATCH_OVERRIDE1 or
+            DeviceTags.LATCH_OVERRIDE2 or
+            DeviceTags.LATCH_OVERRIDE3 or
+            DeviceTags.LATCH_OVERRIDE4 or
+            DeviceTags.LATCH_OVERRIDE5 or
+            DeviceTags.LATCH_OVERRIDE6 or
+            DeviceTags.LATCH_OVERRIDE7 or
+            DeviceTags.LATCH_OVERRIDE8 or
+            DeviceTags.LATCH_OVERRIDE9 or
+            DeviceTags.LATCH_OVERRIDE10 or
+            DeviceTags.LATCH_OVERRIDE11 or
+            DeviceTags.LATCH_OVERRIDE12 or
+            DeviceTags.LATCH_OVERRIDE13 or
+            DeviceTags.LATCH_OVERRIDE14 or
+            DeviceTags.LATCH_OVERRIDE15 or
+            DeviceTags.LATCH_OVERRIDE16 or
+            DeviceTags.LATCH_OVERRIDE17 or
+            DeviceTags.LATCH_OVERRIDE18 or
+            DeviceTags.LATCH_OVERRIDE19 or
+            DeviceTags.LATCH_OVERRIDE20 or
+            DeviceTags.LATCH_OVERRIDE21 or
+            DeviceTags.LATCH_OVERRIDE22 or
+            DeviceTags.LATCH_OVERRIDE23 or
+            DeviceTags.LATCH_OVERRIDE24 or
+            DeviceTags.LATCH_OVERRIDE25 or
+            DeviceTags.LATCH_OVERRIDE26 or
+            DeviceTags.LATCH_OVERRIDE27 or
+            DeviceTags.LATCH_OVERRIDE28 or
+            DeviceTags.LATCH_OVERRIDE29 or
+            DeviceTags.LATCH_OVERRIDE30 or
+            DeviceTags.LATCH_OVERRIDE31 or
+            DeviceTags.LATCH_OVERRIDE32 => true,
             _ => false
         };
     }
