@@ -481,7 +481,8 @@ namespace clab::plugins {
             return;
         }
 
-        esp_err_t result = clab::iot_services::ctrl_rules_eval(sender.c_str(), decoded_buffer, decoded_size);
+        esp_err_t result = clab::iot_services::ctrl_rules_eval(sender.c_str(), 
+                decoded_buffer + sizeof(uint32_t), decoded_size - sizeof(uint32_t));
         if (result != ESP_OK) {
             ESP_LOGE(TAG, "Unable to evaluate rules using provided payload!");
             return;

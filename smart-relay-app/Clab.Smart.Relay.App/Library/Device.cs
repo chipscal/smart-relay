@@ -10,9 +10,10 @@ namespace Clab.Smart.Relay.App;
 
 
 
-public class Device(MQTTClient mqttClient)
+public class Device(string deviceUID, MQTTClient mqttClient)
 {
     
+    public const string BaseTopicFormat         = "/dev/{0}";
     public const string TelemTopicFormat        = "/dev/{0}/telem";
     public const string PropValueTopicFormat    = "/dev/{0}/prop/{1}/value";
     public const string CmdAckTopicFormat       = "/dev/{0}/cmd/{1}/{2}";
@@ -20,7 +21,7 @@ public class Device(MQTTClient mqttClient)
     public const string CmdExecTopicFormat      = "/dev/{0}/cmd/{1}/exec";
 
 
-    public string   DeviceUID           { get; private set; }
+    public string   DeviceUID           { get; private set; } = deviceUID;
     public string   ModelName           { get; private set; }
 
     public Version  HardwareRev         { get; private set; }
@@ -34,8 +35,8 @@ public class Device(MQTTClient mqttClient)
     public int      RelayOutputCount            { get; private set; }
     public int      LatchOutputCount            { get; private set; }
 
-    public Dictionary<DeviceTags, DeviceProperty>              Telemetry       { get; set; }
-    public Dictionary<DeviceTags, DeviceSettableProperty>      Properties      { get; set; }
+    public Dictionary<DeviceTags, DeviceProperty>              Telemetry       { get; set; } = new Dictionary<DeviceTags, DeviceProperty>();
+    public Dictionary<DeviceTags, DeviceSettableProperty>      Properties      { get; set; } = new Dictionary<DeviceTags, DeviceSettableProperty>();
 
     private  MQTTClient _mqttClient = mqttClient;
 
@@ -194,13 +195,17 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.RELAY1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
-
+            
             toUpsert.Tag = tag;
             toUpsert.Value = (relayMask & (1 << k)) > 0 ? "on" : "off";
             toUpsert.LastUpdate = publishDate;
@@ -236,11 +241,15 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.DIGITAL_INPUT1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
 
             toUpsert.Tag = tag;
@@ -253,13 +262,16 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.A_CURRENT_INPUT1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
-
             Array.Copy(decoded, offset, buffer, 0, sizeof(UInt16));
             offset += sizeof(UInt16);
             if (!BitConverter.IsLittleEndian)
@@ -277,13 +289,16 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.A_VOLTAGE_INPUT1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
-
             Array.Copy(decoded, offset, buffer, 0, sizeof(UInt16));
             offset += sizeof(UInt16);
             if (!BitConverter.IsLittleEndian)
@@ -301,11 +316,15 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.PULSE_INPUT1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
 
             Array.Copy(decoded, offset, buffer, 0, sizeof(UInt16));
@@ -316,7 +335,7 @@ public class Device(MQTTClient mqttClient)
             var value = BitConverter.ToUInt16(buffer, 0);
 
             toUpsert.Tag = tag;
-            toUpsert.Value = value.ToString("0.00");
+            toUpsert.Value = value.ToString();
             toUpsert.LastUpdate = publishDate;
 
             tag = DeviceTags.PULSE_FILTER1 + k;
@@ -333,11 +352,15 @@ public class Device(MQTTClient mqttClient)
         {
             var tag = DeviceTags.TEMPERATURE_INPUT1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
 
             Array.Copy(decoded, offset, buffer, 0, sizeof(UInt16));
@@ -351,6 +374,8 @@ public class Device(MQTTClient mqttClient)
             toUpsert.Value = (value / 100.0).ToString("0.00"); //K
             toUpsert.LastUpdate = publishDate;
         }
+
+        ModelName = Encoding.UTF8.GetString(decoded, offset, decoded.Length - offset);
     }
 
     public async Task RestartAsync()

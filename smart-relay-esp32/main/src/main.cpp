@@ -9,6 +9,7 @@
 
 #include "iot_services/iot_services.h"
 #include "iot_services/io_service.h"
+#include "iot_services/rtc_service.h"
 
 #include "plugin/startup.h"
 #include "plugin/comm.h"
@@ -158,9 +159,17 @@ extern "C" void app_main(void)
         vTaskDelay(pdMS_TO_TICKS(CONFIG_MAIN_LOOP_INTERVAL_MILLIS));
         
         // ------------------------- Start Telemetry publish
-        esp_err_t result = clab::iot_services::io_buffer_report(telem_buffer, sizeof(telem_buffer), true);
+        esp_err_t result = clab::iot_services::io_buffer_report(telem_buffer + sizeof(uint32_t), 
+                sizeof(telem_buffer) - sizeof(uint32_t), true);
         if (result == ESP_OK) {
+            
+            // Set timestamp
+            auto ts = clab::iot_services::rtc_get_utc();
+            if (!clab::iot_services::is_little_endian())
+                ts = clab::iot_services::swap_uint32(ts);
 
+            memcpy(telem_buffer, &ts, sizeof(uint32_t));
+            
             // Append model name
             strcpy((char *)(telem_buffer + clab::iot_services::io_buffer_report_size), MODEL_NAME);
 

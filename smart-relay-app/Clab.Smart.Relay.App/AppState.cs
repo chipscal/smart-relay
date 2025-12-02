@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Clab.Smart.Relay.App;
@@ -6,13 +7,14 @@ namespace Clab.Smart.Relay.App;
 public class AppState
 {
 
-    public IEnumerable<Device>      KnownDevices    {get; set;}
+    public Dictionary<string, Device>      KnownDevices    {get; set;}
 
 
     private MQTTClient  _mqttClient = null;
 
     public AppState()
     {
+        KnownDevices = new Dictionary<string, Device>();
     }
 
     public async Task<bool> MqttConnect(string address, int port, string username, string password)
@@ -27,10 +29,7 @@ public class AppState
                         Password = password
                     });
 
-            // await _mqttClient.SubscribeAsync(Device.TelemTopic,      TelemetryCallback);
-            // await _mqttClient.SubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
-            // await _mqttClient.SubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
-            // await _mqttClient.SubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
+            await _mqttClient.SubscribeAsync(string.Format(Device.BaseTopicFormat, "#"), DiscoveredDeviceCallback);
             
             return true;
         }
@@ -38,14 +37,12 @@ public class AppState
         return false;
     }
 
+
     public async Task<bool> MqttDisconnect()
     {
         if (_mqttClient != null)
         {
-            // await _mqttClient.UnSubscribeAsync(Device.TelemTopic,      TelemetryCallback);
-            // await _mqttClient.UnSubscribeAsync(Device.PropValueTopic,  PropertyValueCallback);
-            // await _mqttClient.UnSubscribeAsync(Device.CmdAckTopic,     CommandAckNackCallback);
-            // await _mqttClient.UnSubscribeAsync(Device.CmdNAckTopic,    CommandAckNackCallback);
+            await _mqttClient.UnSubscribeAsync(string.Format(Device.BaseTopicFormat, "#"), DiscoveredDeviceCallback);
 
             await _mqttClient.CloseAsync();
 
@@ -55,20 +52,30 @@ public class AppState
         return false;
     }
 
-
-
-    private async Task CommandAckNackCallback(string topic, ArraySegment<byte> payload)
+    private async Task DiscoveredDeviceCallback(string topic, ArraySegment<byte> payload)
     {
-        throw new NotImplementedException();
+        const string topicMatch = @"^/dev/(\w+)/";
+
+        var propNameRegex = new Regex(topicMatch);
+        var match = propNameRegex.Match(topic);
+        if (match.Success) 
+        {
+            var deviceUID = match.Groups[1].Value;
+            bool toEnable = false;
+
+            lock (KnownDevices)
+            {
+                if (!KnownDevices.ContainsKey(deviceUID))
+                {
+                    var device = new Device(deviceUID, _mqttClient);
+                    KnownDevices[deviceUID] = device;
+                    toEnable = true;
+                }
+            }
+            
+            if (toEnable)
+                await KnownDevices[deviceUID].EnableSelfRefresh();
+        }
     }
 
-    private async Task PropertyValueCallback(string topic, ArraySegment<byte> payload)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task TelemetryCallback(string topic, ArraySegment<byte> payload)
-    {
-        throw new NotImplementedException();
-    }
 }

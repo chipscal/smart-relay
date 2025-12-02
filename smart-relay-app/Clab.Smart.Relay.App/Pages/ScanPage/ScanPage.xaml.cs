@@ -10,6 +10,8 @@ public partial class ScanPage : ContentPage
 	public ObservableCollection<BrokerInfo> Items { get; set; }
 
 	IDispatcherTimer 		_timer;
+
+	private AppState		AppState { get; }
 	
 
 	public BrokerInfo SelectedBroker
@@ -18,9 +20,11 @@ public partial class ScanPage : ContentPage
 		set;
 	}
 
-	public ScanPage()
+	public ScanPage(AppState appState)
 	{
 		InitializeComponent();
+
+		AppState = appState;
 
 		_timer = Dispatcher.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(15);
@@ -70,6 +74,19 @@ public partial class ScanPage : ContentPage
 
 	private async void OnConnectClicked(object? sender, EventArgs e)
 	{
-		await Shell.Current.GoToAsync("//MainPage");
+		var selectedBroker = (BrokerInfo)BrokerCollectionView.SelectedItem;
+
+		if (selectedBroker != null)
+        {
+			var connected = await AppState.MqttConnect(selectedBroker.Host.ToString(), selectedBroker.Port, 
+					UsernameEntry.Text, PasswordEntry.Text);
+
+			if (connected)
+            {
+				await Shell.Current.GoToAsync("//DevicesPage");
+                
+            }
+            
+        }
 	}
 }
