@@ -23,6 +23,20 @@ namespace clab::iot_services {
     /// @note this function is thread safe.
     esp_err_t        ctrl_set_ports(ports_conf_t<io_n_latch, io_n_relay> &port_conf);
 
+    /// @brief Set latch port configuration.
+    /// @param idx of the port
+    /// @param port_conf configuration 
+    /// @return ESP_OK on success.
+    /// @note port_conf values are copied internally, it can be destroyed after.
+    esp_err_t        ctrl_latch_set_port(size_t idx, port_conf_t &port_conf);
+
+    /// @brief Set relay port configuration.
+    /// @param idx of the port
+    /// @param port_conf configuration 
+    /// @return ESP_OK on success.
+    /// @note port_conf values are copied internally, it can be destroyed after.
+    esp_err_t        ctrl_relay_set_port(size_t idx, port_conf_t &port_conf);
+
 
     /// @brief Copies rule configuration to given idx slot
     /// @param idx of the rule

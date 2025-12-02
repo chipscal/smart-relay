@@ -36,6 +36,22 @@ namespace clab::iot_services
         uint8_t     init_d;
         /// @brief Stop delay - seconds.
         uint8_t     stop_d;
+
+        port_conf_t() {
+            memset(this, 0, sizeof(port_conf_t));
+        }
+
+        esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < 2 * sizeof(uint8_t)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            init_d = buffer[0];
+            stop_d = buffer[1];
+
+            return ESP_OK;
+        }
     };
 
     /// @brief Output ports parameters.
@@ -71,6 +87,28 @@ namespace clab::iot_services
             return ESP_OK;
         }
 
+        esp_err_t set_latch_port(size_t idx, port_conf_t &port_conf) {
+            if (idx >= Nl) {
+                return ESP_ERR_INVALID_ARG;
+            }
+
+            latch_conf[idx].init_d = port_conf.init_d;
+            latch_conf[idx].stop_d = port_conf.stop_d;
+
+            return ESP_OK;
+        }
+
+        esp_err_t set_relay_port(size_t idx, port_conf_t &port_conf) {
+            if (idx >= Nr) {
+                return ESP_ERR_INVALID_ARG;
+            }
+
+            relay_conf[idx].init_d = port_conf.init_d;
+            relay_conf[idx].stop_d = port_conf.stop_d;
+
+            return ESP_OK;
+        }
+
     };
 
     template<size_t Nr>
@@ -94,6 +132,21 @@ namespace clab::iot_services
             
             memcpy(relay_conf, buffer + offset, Nr * sizeof(port_conf_t));
             offset += Nr * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+
+        esp_err_t set_latch_port(size_t idx, port_conf_t &port_conf) {
+            return ESP_ERR_INVALID_ARG;
+        }
+
+        esp_err_t set_relay_port(size_t idx, port_conf_t &port_conf) {
+            if (idx >= Nr) {
+                return ESP_ERR_INVALID_ARG;
+            }
+
+            relay_conf[idx].init_d = port_conf.init_d;
+            relay_conf[idx].stop_d = port_conf.stop_d;
 
             return ESP_OK;
         }
@@ -122,6 +175,21 @@ namespace clab::iot_services
             offset += Nl * sizeof(port_conf_t);
 
             return ESP_OK;
+        }
+
+        esp_err_t set_latch_port(size_t idx, port_conf_t &port_conf) {
+            if (idx >= Nl) {
+                return ESP_ERR_INVALID_ARG;
+            }
+
+            latch_conf[idx].init_d = port_conf.init_d;
+            latch_conf[idx].stop_d = port_conf.stop_d;
+
+            return ESP_OK;
+        }
+
+        esp_err_t set_relay_port(size_t idx, port_conf_t &port_conf) {
+            return ESP_ERR_INVALID_ARG;
         }
     };
 

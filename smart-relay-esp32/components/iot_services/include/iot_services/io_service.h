@@ -143,6 +143,13 @@ namespace clab::iot_services
     /// @note this function is thread safe.
     esp_err_t   io_pulse_filter_set(uint16_t *delays, size_t delays_size);
 
+    /// @brief Set pulse counter filter delay
+    /// @param idx of the port
+    /// @param delay to set
+    /// @return ESP_OK on success.
+    /// @note this function is thread safe.
+    esp_err_t io_pulse_filter_set(size_t idx, uint16_t delay);
+
     /// @brief Check if any  output is active.
     /// @return true if any relay or latch is active.
     /// @note this function is thread safe.

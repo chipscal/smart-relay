@@ -620,6 +620,21 @@ namespace clab::iot_services {
         return ESP_OK;
     }
 
+    esp_err_t io_pulse_filter_set(size_t idx, uint16_t delay) {
+        if (idx >= io_n_pulse) {
+            ESP_LOGE(TAG, "idx out of bounds!");
+            return ESP_ERR_INVALID_SIZE;
+        }
+        
+        #if IOT_BOARD_N_PULSE
+            xSemaphoreTake(io_mutex, portMAX_DELAY);
+            pulse_disable[pulse_in[idx]] = delay;
+            xSemaphoreGive(io_mutex);
+        #endif
+
+        return ESP_OK;
+    }
+
     bool io_check_output_active() {
 
         xSemaphoreTake(io_mutex, portMAX_DELAY);
@@ -678,7 +693,7 @@ namespace clab::iot_services {
             size_t      read_bytes = 0;
             size_t      written_bytes = 0;
             
-            uint16_t    value_buffer[IOT_BOARD_N_PULSE];
+            uint16_t    value;
 
             uint16_t    disables_defaults[IOT_BOARD_N_PULSE] = IOT_BOARD_PULSE_DISABLE_DEFAULTS_MILLIS;
             int cnt = 0;
@@ -686,29 +701,28 @@ namespace clab::iot_services {
                 pulse_disable.emplace(key, disables_defaults[cnt]);
                 cnt++;
             }
-            
-            if (storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "pdelay", buffer, sizeof(buffer), &read_bytes) == ESP_OK) {
-                ESP_LOGI(TAG, "Founded setting \"pdelay\":%s", buffer);
-                if (mbedtls_base64_decode((unsigned char *)&value_buffer[0], sizeof(value_buffer), &written_bytes, 
-                        (unsigned char *)buffer, read_bytes - 1) == 0) {
-                    
-                    cnt = 0;
-                    for (auto const &key : IOT_BOARD_PULSE_MACRO) {
-                        if (!clab::iot_services::is_little_endian())
-                            value_buffer[cnt] = clab::iot_services::swap_uint16(value_buffer[cnt]);
 
-                        pulse_disable[key] = value_buffer[cnt];
+            cnt = 0;
+            for (auto const &key : IOT_BOARD_PULSE_MACRO) {
+                char key_buf[8];
+                snprintf(key_buf, 8, "pf%d", cnt);
+            
+                if (clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &read_bytes) == ESP_OK) {
+                    ESP_LOGI(TAG, "Founded setting \"%s\" - size: %u", key_buf, read_bytes);
+
+                    if (mbedtls_base64_decode((unsigned char *)&value, sizeof(uint16_t), &written_bytes, 
+                        (unsigned char *)buffer, read_bytes) == 0) {
+                        
+                        if (!clab::iot_services::is_little_endian())
+                            value = clab::iot_services::swap_uint16(value);
+
+                        pulse_disable[key] = value;
 
                         ESP_LOGI(TAG, "P[%d] delay is: %u ms", cnt, pulse_disable[key]);
-                        cnt++;
+                        
                     }
                 }
-                else {
-                    ESP_LOGE(TAG, "pdelay is invalid, ignoring... using defaults...");
-                }
-            }
-            else {
-                ESP_LOGW(TAG, "pdelay not in memory, using defaults...");
+                cnt++;
             }
 
         #endif

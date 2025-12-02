@@ -227,25 +227,53 @@ namespace clab::plugins {
         ESP_LOGI(TAG, "Received property: %s", alias_string.c_str());
         bool prop_is_ok = false;
 
-        if (alias_string.compare("ports") == 0) {
+
+        if (alias_string.starts_with("rd")) {
             if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
                     (const unsigned char *)payload, payload_size) != 0) {
                 ESP_LOGE(TAG, "Malformed or too big message!");
                 return;
             }
 
-            clab::iot_services::ports_conf_t<clab::iot_services::io_n_latch, clab::iot_services::io_n_relay> ports;
-            if (ports.from_buffer(decoded_buffer, decoded_size) != ESP_OK) {
-                ESP_LOGE(TAG, "Unable to deserialize ports!");
-                return;
+            auto suffix = alias_string.substr(2);
+            auto idx = static_cast<uint8_t>(std::stod(suffix));
+
+            clab::iot_services::port_conf_t received_port_conf;
+            
+            if (received_port_conf.from_buffer(decoded_buffer, decoded_size) == ESP_OK) {
+
+                esp_err_t result = clab::iot_services::ctrl_relay_set_port(idx, received_port_conf);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Unable to set port!");
+                    return;
+                }
+                prop_is_ok = true;
             }
-            result = clab::iot_services::ctrl_set_ports(ports);
-            if (result != ESP_OK) {
-                ESP_LOGE(TAG, "Ports Unable to set!");
+
+        }
+
+        if (alias_string.starts_with("ld")) {
+            if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
+                    (const unsigned char *)payload, payload_size) != 0) {
+                ESP_LOGE(TAG, "Malformed or too big message!");
                 return;
             }
 
-            prop_is_ok = true;
+            auto suffix = alias_string.substr(2);
+            auto idx = static_cast<uint8_t>(std::stod(suffix));
+
+            clab::iot_services::port_conf_t received_port_conf;
+            
+            if (received_port_conf.from_buffer(decoded_buffer, decoded_size) == ESP_OK) {
+
+                esp_err_t result = clab::iot_services::ctrl_latch_set_port(idx, received_port_conf);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Unable to set port!");
+                    return;
+                }
+                prop_is_ok = true;
+            }
+
         }
 
         if (alias_string.compare("over") == 0) {
@@ -268,37 +296,33 @@ namespace clab::plugins {
             prop_is_ok = true;
         }
 
-        if (alias_string.compare("pdelay") == 0) {
+        if (alias_string.starts_with("pf")) {
             if (mbedtls_base64_decode(decoded_buffer, sizeof(decoded_buffer), &decoded_size, 
                     (const unsigned char *)payload, payload_size) != 0) {
                 ESP_LOGE(TAG, "Malformed or too big message!");
                 return;
             }
 
-            uint16_t delays[clab::iot_services::io_n_pulse];
-            if (decoded_size != sizeof(delays)) {
-                ESP_LOGE(TAG, "pdelay size is invalid!");
-                return;
-            }
+            auto suffix = alias_string.substr(2);
+            auto idx = static_cast<uint8_t>(std::stod(suffix));
 
-            for (int k = 0; k < clab::iot_services::io_n_pulse; k++) {
+            if (decoded_size == sizeof(uint16_t)) {
+
                 uint16_t value = 0;
-                memcpy((uint8_t *)&value, decoded_buffer + k * sizeof(uint16_t), sizeof(uint16_t));
+                memcpy((uint8_t *)&value, decoded_buffer, sizeof(uint16_t));
 
                 if (!clab::iot_services::is_little_endian()) {
                     value = clab::iot_services::swap_uint16(value);
                 }
 
-                delays[k] = value;
+                esp_err_t result = clab::iot_services::io_pulse_filter_set(idx, value);
+                if (result != ESP_OK) {
+                    ESP_LOGE(TAG, "Unable to set pulse filter!");
+                    return;
+                }
+                prop_is_ok = true;
             }
 
-            esp_err_t result = clab::iot_services::io_pulse_filter_set(delays, clab::iot_services::io_n_pulse);
-            if (result != ESP_OK) {
-                ESP_LOGE(TAG, "Unable to set pulse filter delays!");
-                return;
-            }
-
-            prop_is_ok = true;
         }
 
         if (alias_string.starts_with("rule")) {

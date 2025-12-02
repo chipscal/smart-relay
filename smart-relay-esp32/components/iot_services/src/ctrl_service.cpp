@@ -62,26 +62,49 @@ namespace clab::iot_services {
         size_t  prop_size = 0;
 
         //try to restore last settings...
-        //ports
-        if (init_from_storage && storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, "ports", (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
-            ESP_LOGI(TAG, "Founded setting \"ports\":%.*s (%d bytes)", out_size, buffer, out_size);
+        //------------------------ ports:
+        ports = clab::iot_services::ports_conf_t<io_n_latch, io_n_relay>();
 
-            if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
-                
-                clab::iot_services::sprint_array_hex((char *)buffer, prop_value_buffer, prop_size);
-                ESP_LOGI(TAG, "Property: %s, Decoded size: %u", buffer, prop_size);
+        for (int k = 0; k < io_n_relay; k++) {
+            char key_buf[8];
+            snprintf(key_buf, 8, "rd%d", k);
+           
+            if (init_from_storage && clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+                ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
 
-                if (ports.from_buffer(prop_value_buffer, prop_size)) {
+                if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                    
+                    auto port_conf = clab::iot_services::port_conf_t();
+                    if (port_conf.from_buffer(prop_value_buffer, prop_size) != ESP_OK) {
+                        ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                        continue;
+                    }
 
-                    ESP_LOGE(TAG, "Deserialization error! Ignoring...");
-
-                    memset(&ports, 0, ports.size());
+                    ports.set_relay_port(k, port_conf);
+                     
                 }
-            } 
-
+            }
         }
-        else {
-            memset(&ports, 0, ports.size());
+
+        for (int k = 0; k < io_n_latch; k++) {
+            char key_buf[8];
+            snprintf(key_buf, 8, "ld%d", k);
+           
+            if (init_from_storage && clab::iot_services::storage_db_get(CONFIG_IOT_IO_STORAGE_NAMESPACE, key_buf, (char *)buffer, sizeof(buffer), &out_size) == ESP_OK) {
+                ESP_LOGI(TAG, "Founded setting \"%s\":%.*s - size: %u", key_buf, out_size, buffer, out_size);
+
+                if (mbedtls_base64_decode(prop_value_buffer, sizeof(prop_value_buffer), &prop_size, buffer, out_size) == 0) {
+                    
+                    auto port_conf = clab::iot_services::port_conf_t();
+                    if (port_conf.from_buffer(prop_value_buffer, prop_size) != ESP_OK) {
+                        ESP_LOGE(TAG, "Deserialization error! Ignoring...");
+                        continue;
+                    }
+
+                    ports.set_latch_port(k, port_conf);
+                     
+                }
+            }
         }
 
         // --------------------- control_rules:
@@ -282,6 +305,29 @@ namespace clab::iot_services {
         xSemaphoreGive(ctrl_mutex);
 
         return ESP_OK;
+    }
+
+    esp_err_t ctrl_latch_set_port(size_t idx, port_conf_t &port_conf) {
+        
+        esp_err_t result;
+        
+        xSemaphoreTake(ctrl_mutex, portMAX_DELAY);
+        result = ports.set_latch_port(idx, port_conf);
+        xSemaphoreGive(ctrl_mutex);
+
+        return result;
+    }
+
+    
+    esp_err_t ctrl_relay_set_port(size_t idx, port_conf_t &port_conf) {
+        
+        esp_err_t result;
+        
+        xSemaphoreTake(ctrl_mutex, portMAX_DELAY);
+        result = ports.set_relay_port(idx, port_conf);
+        xSemaphoreGive(ctrl_mutex);
+
+        return result;
     }
 
     esp_err_t ctrl_rule_set(size_t idx, clab::iot_services::combined_rule_t<CONFIG_IOT_CRULE_SIZE, CONFIG_IOT_DEVICEUID_MAX_SIZE> &rule){
