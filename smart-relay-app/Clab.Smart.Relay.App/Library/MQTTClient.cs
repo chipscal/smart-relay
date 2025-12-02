@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using MQTTnet.Client;
 using MQTTnet.Packets;
 using System.Security.Cryptography.X509Certificates;
+using System.Diagnostics;
 
 namespace Clab.Smart.Relay.App;
 
@@ -162,6 +163,7 @@ public class MQTTClient
             if (topicMatched)
                 foreach (var callback in subscriptionList.Value) 
                 {
+                    Debug.WriteLine($"{subscriptionList.Key}:{callback.ToString()}");
                     var task = Task.Run(async () => {
                         await callback(obj.ApplicationMessage.Topic, obj.ApplicationMessage.PayloadSegment);
                     });
@@ -184,6 +186,10 @@ public class MQTTClient
         }
         if (toSub)
             await _mqttClient.SubscribeAsync(topic);
+
+        //TODO: avoid replicated messages 
+        // find most generic topic if exists and fuse callbacks
+        // unsubscribe to less generic one
     }
 
     public async Task UnSubscribeAsync(string topic, MQTTMessageCallback callback)

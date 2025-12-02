@@ -96,7 +96,7 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         // Voltage0_LSB|Voltage0_MSB|...|VoltageN_LSB|VoltageN_MSB
         // Pulse0_LSB|Pulse0_MSB|...|PulseN_LSB|PulseN_MSB
         // Temperature0_LSB|Temperature0_MSB|...|TemperatureN_LSB|TemperatureN_MSB
-
+        Debug.WriteLine("Received telemetry!");
 
         int offset = 0;
         var decoded = Convert.FromBase64String(Encoding.UTF8.GetString(payload));
@@ -153,34 +153,43 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         {
             var tag = DeviceTags.LATCH1 + k;
 
-            var toUpsert = Telemetry.GetValueOrDefault(tag);
-            if (toUpsert == null)
+            DeviceProperty toUpsert = null;
+            lock (Telemetry)
             {
-                toUpsert = new DeviceProperty(this);
-                Telemetry[tag] = toUpsert;
+                toUpsert = Telemetry.GetValueOrDefault(tag);
+                if (toUpsert == null)
+                {
+                    toUpsert = new DeviceProperty(this);
+                    Telemetry[tag] = toUpsert;
+                }
             }
 
             toUpsert.Tag = tag;
             toUpsert.Value = (latchMask & (1 << k)) > 0 ? "on" : "off";
             toUpsert.LastUpdate = publishDate;
 
-            tag = DeviceTags.LATCH_DELAYS1 + k;
-            var propToUpsert = Properties.GetValueOrDefault(tag);
-            if (propToUpsert == null)
+
+            lock (Properties)
             {
-                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                propToUpsert.Tag = tag;
-                Properties[tag] = propToUpsert;
+                tag = DeviceTags.LATCH_DELAYS1 + k;
+                var propToUpsert = Properties.GetValueOrDefault(tag);
+                if (propToUpsert == null)
+                {
+                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                    propToUpsert.Tag = tag;
+                    Properties[tag] = propToUpsert;
+                }
+            
+                tag = DeviceTags.LATCH_OVERRIDE1 + k;
+                propToUpsert = Properties.GetValueOrDefault(tag);
+                if (propToUpsert == null)
+                {
+                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                    propToUpsert.Tag = tag;
+                    Properties[tag] = propToUpsert;
+                }
             }
 
-            tag = DeviceTags.LATCH_OVERRIDE1 + k;
-            propToUpsert = Properties.GetValueOrDefault(tag);
-            if (propToUpsert == null)
-            {
-                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                propToUpsert.Tag = tag;
-                Properties[tag] = propToUpsert;
-            }
         }
 
         // Relay
@@ -205,27 +214,30 @@ public class Device(string deviceUID, MQTTClient mqttClient)
                     Telemetry[tag] = toUpsert;
                 }
             }
-            
+
             toUpsert.Tag = tag;
             toUpsert.Value = (relayMask & (1 << k)) > 0 ? "on" : "off";
             toUpsert.LastUpdate = publishDate;
 
-            tag = DeviceTags.RELAY_DELAYS1 + k;
-            var propToUpsert = Properties.GetValueOrDefault(tag);
-            if (propToUpsert == null)
+            lock (Properties)
             {
-                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                propToUpsert.Tag = tag;
-                Properties[tag] = propToUpsert;
-            }
+                tag = DeviceTags.RELAY_DELAYS1 + k;
+                var propToUpsert = Properties.GetValueOrDefault(tag);
+                if (propToUpsert == null)
+                {
+                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                    propToUpsert.Tag = tag;
+                    Properties[tag] = propToUpsert;
+                }
 
-            tag = DeviceTags.RELAY_OVERRIDE1 + k;
-            propToUpsert = Properties.GetValueOrDefault(tag);
-            if (propToUpsert == null)
-            {
-                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                propToUpsert.Tag = tag;
-                Properties[tag] = propToUpsert;
+                tag = DeviceTags.RELAY_OVERRIDE1 + k;
+                propToUpsert = Properties.GetValueOrDefault(tag);
+                if (propToUpsert == null)
+                {
+                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                    propToUpsert.Tag = tag;
+                    Properties[tag] = propToUpsert;
+                }
             }
         }
 
@@ -338,13 +350,16 @@ public class Device(string deviceUID, MQTTClient mqttClient)
             toUpsert.Value = value.ToString();
             toUpsert.LastUpdate = publishDate;
 
-            tag = DeviceTags.PULSE_FILTER1 + k;
-            var propToUpsert = Properties.GetValueOrDefault(tag);
-            if (propToUpsert == null)
+            lock (Properties)
             {
-                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                propToUpsert.Tag = tag;
-                Properties[tag] = propToUpsert;
+                tag = DeviceTags.PULSE_FILTER1 + k;
+                var propToUpsert = Properties.GetValueOrDefault(tag);
+                if (propToUpsert == null)
+                {
+                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                    propToUpsert.Tag = tag;
+                    Properties[tag] = propToUpsert;
+                }
             }
         }
 
