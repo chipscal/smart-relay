@@ -1,0 +1,203 @@
+#!meta
+
+{"kernelInfo":{"defaultKernelName":"csharp","items":[{"name":"csharp","languageName":"csharp"},{"name":"fsharp","languageName":"F#","aliases":["f#","fs"]},{"name":"html","languageName":"HTML"},{"name":"http","languageName":"HTTP"},{"name":"javascript","languageName":"JavaScript","aliases":["js"]},{"name":"mermaid","languageName":"Mermaid"},{"name":"pwsh","languageName":"PowerShell","aliases":["powershell"]},{"name":"value"}]}}
+
+#!csharp
+
+private static bool TopicMatch(string matchTopic, string testTopic)
+{
+    var matchTopicPath = matchTopic.Split("/");
+    var testTopicPath = testTopic.Split("/");
+
+
+    string  matchShare = null;
+    int     matchStart = 0;
+    if (matchTopicPath[0].ToLowerInvariant() == "$share") //shared subscription support
+    {
+        matchShare = matchTopicPath[1].ToLowerInvariant();
+        matchStart = 2;
+    } 
+
+    string  testShare = null;
+    int     testStart = 0;
+    if (testTopicPath[0].ToLowerInvariant() == "$share") //shared subscription support
+    {
+        testShare = testTopicPath[1].ToLowerInvariant();
+        testStart = 2;
+    }
+
+    if (!string.IsNullOrWhiteSpace(matchShare) && !string.IsNullOrWhiteSpace(testShare) && matchShare != testShare)
+        return false;
+
+    if (testTopicPath.Last() != "#" && (testTopicPath.Length - testStart) != (matchTopicPath.Length - matchStart))
+        return false; 
+
+
+    bool topicMatched = true;
+    for (int k = testStart; k < testTopicPath.Length; k++)
+    {
+        if (k == testTopicPath.Length - 1 && testTopicPath[k] == "#")
+            break;
+
+        if (testTopicPath[k] != "+" && testTopicPath[k].ToUpperInvariant() != matchTopicPath[k - testStart + matchStart].ToUpperInvariant())
+        {
+            topicMatched = false;
+            break;
+        }   
+    }
+
+    return topicMatched;
+}
+
+private static string GetMostGenericTopic(string t1, string t2)
+{
+    if (TopicMatch(t2, t1))
+        return t1;
+    else if (TopicMatch(t1, t2))
+        return t2;
+    else
+        return null;
+}
+
+
+public class TopicTreeNode<V>(string topic, V value) : Dictionary<string, TopicTreeNode<V>>
+{
+    public string   Topic { get; private set; } = topic;
+    public V        Value { get; private set; } = value;
+
+    public bool TryAdd(TopicTreeNode<V> child)
+    {
+        if (child.Topic == Topic)
+        {
+            throw new InvalidOperationException("Already present");
+        }
+
+        if (TopicMatch(child.Topic, Topic)) // if Topic is most generic
+        {
+            foreach (var subTree in this.Values.ToArray())
+            {
+                if (TopicMatch(subTree.Topic, child.Topic)) // if child.Topic is more generic than subtree
+                {
+                    if (this.Remove(subTree.Topic))
+                    {
+                        if (child.TryAdd(subTree))
+                        {
+                            this[child.Topic] = child;
+                            continue;
+                        }
+                    }
+                }
+
+                if (subTree.TryAdd(child))
+                    return true;
+            }
+
+            this[child.Topic] = child;
+            return true;
+        }
+
+        return false;
+
+    }
+
+    public TopicTreeNode<V> TryFind(string topic)
+    {
+        if (topic == this.Topic)
+        {
+            return this;
+        }
+
+        if (TopicMatch(topic, Topic)) // if this.Topic is most generic
+        {
+            foreach (var subTree in this.Values.ToArray())
+            {
+                var found = subTree.TryFind(topic);
+                if (found != null)
+                    return found;
+            }
+        }
+
+        return null;
+    }
+
+    public bool TryRemove(string topic)
+    {
+        if (topic == this.Topic)
+        {
+            throw new InvalidOperationException("Cannot remove myself!");
+        }
+
+        if (TopicMatch(topic, Topic)) // if Topic is most generic
+        {
+            foreach (var subTree in this.Values.ToArray())
+            {
+                if (subTree.Topic == topic)
+                {
+                    if (this.Remove(subTree.Topic))
+                    {
+                        foreach (var child in subTree.Values)
+                        {
+                            this[child.Topic] = child;
+                        }
+                        return true;
+                    }
+                }
+
+                if (subTree.TryRemove(topic))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    public IEnumerable<V> GetMatches(string topic)
+    {
+        
+        if (TopicMatch(topic, Topic))
+        {
+            yield return Value;
+            foreach (var subTree in this.Values)
+            {
+                foreach (var value in subTree.GetMatches(topic))
+                    yield return value;
+            }
+        }
+
+    }
+
+}
+
+public class TopicTree<V>() : TopicTreeNode<V>("#", default)
+{
+    
+}
+
+
+
+var t1 = "$share/share1/dev/asdasd/gino";
+var t2 = "$share/share1/dev/asdasd/gino";
+
+display(TopicMatch(t1, t2));
+display(TopicMatch(t2, t1));
+display(GetMostGenericTopic(t1, t2));
+
+
+var tree = new TopicTree<int>();
+tree.TryAdd(new TopicTreeNode<int>("dev/gino/ginetto", 2));
+tree.TryAdd(new TopicTreeNode<int>("dev/gino/#", 1));
+tree.TryAdd(new TopicTreeNode<int>("dev/gino1/ginetto", 3));
+tree.TryAdd(new TopicTreeNode<int>("dev/#", 4));
+tree.TryAdd(new TopicTreeNode<int>("dev1/a", 5));
+tree.TryAdd(new TopicTreeNode<int>("dev1/a/b", 6));
+tree.TryAdd(new TopicTreeNode<int>("dev1/#",7));
+tree.TryAdd(new TopicTreeNode<int>("dev1/+/b", 8));
+
+display(tree);
+
+// display(tree.TryFind("dev1/#"));
+
+// tree.TryRemove("dev1/+/b");
+// display(tree);
+
+display(tree.GetMatches("dev1/a/b"))
