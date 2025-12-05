@@ -41,8 +41,6 @@ public class MQTTNetCertificateProvider : IMqttClientCertificatesProvider
 }
     
 
-
-
 public class MQTTClient
 {
 
@@ -70,9 +68,11 @@ public class MQTTClient
 
     IManagedMqttClient _mqttClient;
 
-    private Dictionary<string, List<MQTTMessageCallback>> _callbacks = 
-            new Dictionary<string, List<MQTTMessageCallback>>();
+    private TopicTree<List<MQTTMessageCallback>> _mqttSubscriptions = 
+            new TopicTree<List<MQTTMessageCallback>>();
     
+    private SemaphoreSlim _mutex = new SemaphoreSlim(1, 1);
+
     public MQTTClient(MqttSettings settings)
     {
         // Creates a new client
@@ -133,160 +133,100 @@ public class MQTTClient
         await _mqttClient.StopAsync();
     }
 
-
-    private bool TopicMatch(string matchTopic, string testTopic)
-    {
-        var matchTopicPath = matchTopic.Split("/");
-        var testTopicPath = testTopic.Split("/");
-
-
-        string  matchShare = null;
-        int     matchStart = 0;
-        if (matchTopicPath[0].ToLowerInvariant() == "$share") //shared subscription support
-        {
-            matchShare = matchTopicPath[1].ToLowerInvariant();
-            matchStart = 2;
-        } 
-
-        string  testShare = null;
-        int     testStart = 0;
-        if (testTopicPath[0].ToLowerInvariant() == "$share") //shared subscription support
-        {
-            testShare = testTopicPath[1].ToLowerInvariant();
-            testStart = 2;
-        }
-
-        if (!string.IsNullOrWhiteSpace(matchShare) && !string.IsNullOrWhiteSpace(testShare) && matchShare != testShare)
-            return false;
-
-        if (testTopicPath.Last() != "#" && (testTopicPath.Length - testStart) != (matchTopicPath.Length - matchStart))
-            return false; 
-
-
-        bool topicMatched = true;
-        for (int k = testStart; k < testTopicPath.Length; k++)
-        {
-            if (k == testTopicPath.Length - 1 && testTopicPath[k] == "#")
-                break;
-
-            if (testTopicPath[k] != "+" && testTopicPath[k].ToUpperInvariant() != matchTopicPath[k - testStart + matchStart].ToUpperInvariant())
-            {
-                topicMatched = false;
-                break;
-            }   
-        }
-
-        return topicMatched;
-    }
-
-
-    private string GetMostGenericTopic(string t1, string t2)
-    {
-        if (TopicMatch(t2, t1))
-            return t1;
-        else if (TopicMatch(t1, t2))
-            return t2;
-        else
-            return null;
-    }
-
     private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs obj)
     {
-        // foreach(var subscriptionList in _callbacks)
-        // {
-        //     //topic matches subscriptions
-        //     if (TopicMatch(obj.ApplicationMessage.Topic, subscriptionList.Key))
-        //         foreach (var callback in subscriptionList.Value) 
-        //         {
-        //             Debug.WriteLine($"{subscriptionList.Key}:{callback.ToString()}");
-        //             var task = Task.Run(async () => {
-        //                 await callback(obj.ApplicationMessage.Topic, obj.ApplicationMessage.PayloadSegment);
-        //             });
-        //         }
-        // }
+        foreach (var callbackList in _mqttSubscriptions.GetTreeMatches(obj.ApplicationMessage.Topic))
+        {
+            foreach (var callback in callbackList) 
+            {
+                var task = Task.Run(async () => {
+                    await callback(obj.ApplicationMessage.Topic, obj.ApplicationMessage.PayloadSegment);
+                });
+            }
+        }
     }
-
-    //gino/peppino/1
-    //gino/peppin0/2
-    //gino/+/1
 
     public async Task SubscribeAsync(string topic, MQTTMessageCallback callback)
     {
-        // bool toSub = true;
-        // var toUnsubscribeList = new List<string>();
-        // lock(this)
-        // {
-        //     // test if more specific of existing one
-        //     foreach (var existingTopic in _callbacks.Keys)
-        //     {
-        //         if (TopicMatch(existingTopic, topic))
-        //         {
-        //             toSub = false;
-        //             break;
-        //         }
-        //     }
+        await _mutex.WaitAsync();
+        try
+        {
+            TopicTreeNode<List<MQTTMessageCallback>> node = _mqttSubscriptions.TryTreeFind(topic);
+            if (node != null)
+            {
+                node.Value.Add(callback);
+            }
+            else
+            {
+                var beforeMqttTopics = _mqttSubscriptions.Keys.ToArray();
 
-        //     // test if more generic, find all topic that can be simplified (unsubscribed)
-        //     while (true)
-        //     {
-        //         var moreSpecificTopic = _callbacks.Keys.Where((t) => !toUnsubscribeList.Contains(t) && TopicMatch(topic, t)).FirstOrDefault();
-        //         if (moreSpecificTopic == null)
-        //         {
-        //             break;
-        //         }               
-        //         else
-        //         {
-        //             toUnsubscribeList.Add(moreSpecificTopic);
-        //         }
-        //     }
+                _mqttSubscriptions.TryTreeAdd(
+                        new TopicTreeNode<List<MQTTMessageCallback>>(
+                                topic, new List<MQTTMessageCallback> { callback }));
 
+                var afterMqttTopics = _mqttSubscriptions.Keys.ToArray();
 
-        //     if (!_callbacks.ContainsKey(topic))
-        //     {
-        //         _callbacks[topic] = new List<MQTTMessageCallback>();
-        //         toSub = true;
-        //     }
-
-        //     _callbacks[topic].Add(callback);
-        // }
-
-
-        // if (toSub)
-        //     await _mqttClient.SubscribeAsync(topic);
-
-        // foreach (var toUnsub in toUnsubscribeList)
-        // {
-        //     await _mqttClient.UnsubscribeAsync(topic);
-        // }
-
-        //TODO: avoid replicated messages 
-        // find most generic topic if exists and fuse callbacks
-        // unsubscribe to less generic one
+                foreach (var entry in beforeMqttTopics)
+                {
+                    if (afterMqttTopics.Where(t => t == entry).Count() == 0) //topic removed from root as is more specific
+                    {
+                        await _mqttClient.UnsubscribeAsync(topic);
+                    }
+                }
+                
+                foreach (var entry in afterMqttTopics)
+                {
+                    if (beforeMqttTopics.Where(t => t == entry).Count() == 0) //new most generic topic
+                    {
+                        await _mqttClient.SubscribeAsync(topic);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _mutex.Release();
+        }
     }
 
     public async Task UnSubscribeAsync(string topic, MQTTMessageCallback callback)
     {
-        // bool toUnSub = false;
-        // lock(this)
-        // {
-        //     if (!_callbacks.ContainsKey(topic))
-        //         throw new ArgumentOutOfRangeException($"<{topic}> not subscribed!");
+        await _mutex.WaitAsync();
+        try
+        {
+            TopicTreeNode<List<MQTTMessageCallback>> node = _mqttSubscriptions.TryTreeFind(topic);
+            if (node == null)
+                throw new InvalidOperationException($"Topic <<{topic}>> not subscribed!");
 
-            
-        //     _callbacks[topic].Remove(callback);
-        //     if (_callbacks[topic].Count == 0)
-        //     {
+            if (node.Value.Remove(callback))
+            {
+                if (node.Value.Count() == 0) // no more subscription on this topic
+                {
+                    var beforeMqttTopics = _mqttSubscriptions.Keys.ToArray();
 
-        //         // if it's more generic of still active topics must subscribe them back
+                    _mqttSubscriptions.TryTreeRemove(topic);
 
-        //         _callbacks.Remove(topic);
+                    var afterMqttTopics = _mqttSubscriptions.Keys.ToArray();
 
+                    if (beforeMqttTopics.Where(t => t == topic).Count() != 0)
+                    {
+                        await _mqttClient.UnsubscribeAsync(topic);
+                    }
 
-        //     }
-
-        // }
-        // if (toUnSub)
-        //     await _mqttClient.UnsubscribeAsync(topic);
+                    foreach (var entry in afterMqttTopics)
+                    {
+                        if (beforeMqttTopics.Where(t => t == entry).Count() == 0) //new most generic topic
+                        {
+                            await _mqttClient.SubscribeAsync(topic);
+                        }
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _mutex.Release();
+        }
     }
 
     public async Task EnqueueMessageAsync(string topic, string payload)

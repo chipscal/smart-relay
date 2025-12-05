@@ -197,7 +197,8 @@ display(tree);
 
 // display(tree.TryFind("dev1/#"));
 
-// tree.TryRemove("dev1/+/b");
-// display(tree);
+tree.TryRemove("dev1/+/b");
+tree.TryRemove("dev1/#");
+display(tree);
 
 display(tree.GetMatches("dev1/a/b"))
