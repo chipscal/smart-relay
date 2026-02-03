@@ -9,6 +9,8 @@ public class AppState
 
     public Dictionary<string, Device>      KnownDevices    {get; set;}
 
+    public event EventHandler   OnNewDeviceFound;
+
 
     private MQTTClient  _mqttClient = null;
 
@@ -68,13 +70,23 @@ public class AppState
                 if (!KnownDevices.ContainsKey(deviceUID))
                 {
                     var device = new Device(deviceUID, _mqttClient);
+                    if (string.Format(Device.TelemTopicFormat, deviceUID) == topic)
+                    {
+                        device.RefreshFromTelemetry(payload);
+                    }
+
+
                     KnownDevices[deviceUID] = device;
                     toEnable = true;
                 }
             }
             
             if (toEnable)
+            {
                 await KnownDevices[deviceUID].EnableSelfRefresh();
+                
+                OnNewDeviceFound(this, EventArgs.Empty);
+            }
         }
     }
 

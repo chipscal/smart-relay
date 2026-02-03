@@ -17,7 +17,6 @@
                     ItemsSource="{Binding Items}" 
                     SelectionMode="Single" 
                     x:Name="DeviceCollectionView"
-                    SelectedItem="{Binding SelectedDevice, Mode=TwoWay}"
                     Margin="10">
                 <CollectionView.ItemsLayout>
                     <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=1, Tablet=3, Desktop=3}" />

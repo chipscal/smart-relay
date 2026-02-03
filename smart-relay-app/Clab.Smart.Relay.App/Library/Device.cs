@@ -38,6 +38,8 @@ public class Device(string deviceUID, MQTTClient mqttClient)
     public Dictionary<DeviceTags, DeviceProperty>              Telemetry       { get; set; } = new Dictionary<DeviceTags, DeviceProperty>();
     public Dictionary<DeviceTags, DeviceSettableProperty>      Properties      { get; set; } = new Dictionary<DeviceTags, DeviceSettableProperty>();
 
+    public event EventHandler OnTelemetryUpdate;
+
     private  MQTTClient _mqttClient = mqttClient;
 
     public async Task EnableSelfRefresh()
@@ -83,6 +85,8 @@ public class Device(string deviceUID, MQTTClient mqttClient)
     private async Task RefreshFromTelemetryHandle(string topic, ArraySegment<byte> payload)
     {
         RefreshFromTelemetry(payload);
+
+        OnTelemetryUpdate(this, EventArgs.Empty);
     }
 
     public void RefreshFromTelemetry(ArraySegment<byte> payload)

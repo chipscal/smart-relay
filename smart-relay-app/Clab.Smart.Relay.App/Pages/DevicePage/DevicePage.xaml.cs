@@ -6,8 +6,12 @@ using Microsoft.Maui.Controls;
 
 namespace Clab.Smart.Relay.App;
 
+
+[QueryProperty(nameof(DeviceUID), "deviceUID")]
 public partial class DevicePage : ContentPage
 {
+
+    public string DeviceUID {get; set;}
 
     private readonly DeviceHeaderView DeviceHeader;
     private readonly DeviceStatusView DeviceStatus;
@@ -174,6 +178,19 @@ public partial class DevicePage : ContentPage
             BuildDesktop();
 
         BindingContext = this;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        Debug.WriteLine(DeviceUID);
+    }
+
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
     }
 
     private void BuildMobile()

@@ -98,7 +98,9 @@ public class TopicTreeNode<V>(string topic, V value) : Dictionary<string, TopicT
         
         if (TopicMatch(topic, Topic))
         {
-            yield return Value;
+            if (Value != null)
+                yield return Value;
+                
             foreach (var subTree in this.Values)
             {
                 foreach (var value in subTree.GetTreeMatches(topic))

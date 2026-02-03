@@ -171,10 +171,10 @@ extern "C" void app_main(void)
             memcpy(telem_buffer, &ts, sizeof(uint32_t));
             
             // Append model name
-            strcpy((char *)(telem_buffer + clab::iot_services::io_buffer_report_size), MODEL_NAME);
+            strcpy((char *)(telem_buffer + sizeof(uint32_t) + clab::iot_services::io_buffer_report_size), MODEL_NAME);
 
             if (mbedtls_base64_encode((unsigned char *)encoded_buffer, sizeof(encoded_buffer), 
-                    &encoded_size, telem_buffer, clab::iot_services::io_buffer_report_size + sizeof(MODEL_NAME)) < 0) {
+                    &encoded_size, telem_buffer, clab::iot_services::io_buffer_report_size  + sizeof(uint32_t) + sizeof(MODEL_NAME)) < 0) {
                 ESP_LOGE(MAIN_APP_TAG, "Unable to byte64 encode telemetry, too big!");
                 return;
             }
