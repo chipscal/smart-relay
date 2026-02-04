@@ -11,7 +11,35 @@ namespace Clab.Smart.Relay.App;
 public partial class DevicePage : ContentPage
 {
 
-    public string DeviceUID {get; set;}
+    private string _deviceUID = null;
+    public string DeviceUID 
+    {
+        get => _deviceUID; 
+        set
+        {
+            if (_deviceUID != null && AppState.KnownDevices.TryGetValue(_deviceUID, out Device oldDevice))
+            {
+                oldDevice.OnTelemetryUpdate -= BeginRefreshDeviceStatusAndProperties;
+                oldDevice.OnPropertyChanged -= BeginRefreshDeviceStatusAndProperties;
+            }
+
+            _deviceUID = value;
+            
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                UpdateDeviceStatusAndProperties(); 
+
+                if (AppState.KnownDevices.TryGetValue(_deviceUID, out Device device))
+                {
+                    device.OnTelemetryUpdate += BeginRefreshDeviceStatusAndProperties;
+                    device.OnPropertyChanged += BeginRefreshDeviceStatusAndProperties;
+                }
+
+                MainThread.InvokeOnMainThreadAsync(ScanAllProperties);
+            });
+        }
+    }
 
     private readonly DeviceHeaderView DeviceHeader;
     private readonly DeviceStatusView DeviceStatus;
@@ -19,60 +47,19 @@ public partial class DevicePage : ContentPage
     private readonly RuleListView     RuleList;
     private readonly ProgramListView  ProgramList;
 
-    public DevicePage()
+	private AppState		AppState { get; }
+
+    public DevicePage(AppState appState)
     {
         InitializeComponent();
 
-        DeviceHeader = new DeviceHeaderView
-        {
-            Title = "RA1237917341",
-            Model = "SMART R1"
-        };
+        AppState = appState;
 
+        DeviceHeader = new DeviceHeaderView();
         DeviceStatus = new DeviceStatusView();
-        DeviceStatus.DeviceStatus = new ObservableCollection<DevicePropertyInfo>
-        {
-            new DevicePropertyInfo
-            {
-                Name = "H.Rev",
-                Value = "1"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "S.Rev",
-                Value = "1.1"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Latch",
-                Value = "None"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Relay",
-                Value = "r0"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Digital",
-                Value = "d0,d1"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Voltage[1]",
-                Value = "0.00 mV"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Pulse[1]",
-                Value = "12400"
-            },
-            new DevicePropertyInfo
-            {
-                Name = "Temperature[1]",
-                Value = "22.32 °C"
-            },
-        };
+        PropertyList = new PropertyListView();
+        RuleList = new RuleListView();
+        ProgramList = new ProgramListView();
 
         ProgramList = new ProgramListView();
         ProgramList.DevicePrograms = new ObservableCollection<DeviceProgramInfo>
@@ -180,6 +167,66 @@ public partial class DevicePage : ContentPage
         BindingContext = this;
     }
 
+    private void BeginRefreshDeviceStatusAndProperties(object sender, EventArgs e)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            UpdateDeviceStatusAndProperties(); 
+        });
+    }
+
+    private void UpdateDeviceStatusAndProperties()
+    {
+        if (AppState.KnownDevices.TryGetValue(DeviceUID, out Device device))
+        {
+            DeviceHeader.Title = DeviceUID;
+            DeviceHeader.Model = device.ModelName;
+
+            DeviceStatus.DeviceStatus.Clear();
+            foreach (var info in device.Telemetry.Values
+                    .OrderBy(t => t.Tag)
+                    .Select(t => new DevicePropertyInfo { Name = t.Tag.ToString(), Value = t.Value }))
+            {
+                DeviceStatus.DeviceStatus.Add(info);
+            }
+
+            PropertyList.DeviceProperties.Clear();
+            foreach (var prop in device.Properties.Values
+                    .OrderBy(p => p.Tag)
+                    .Select(p => new DevicePropertyInfo { Name = p.Tag.ToString(), Value = p.Value}))
+            {
+                PropertyList.DeviceProperties.Add(prop);
+            }
+        }
+    }
+
+    private async Task ScanAllProperties()
+    {
+        if (AppState.KnownDevices.TryGetValue(DeviceUID, out Device device))
+        {
+            foreach (var prop in device.Properties.Values)
+            {
+                await prop.QueryAsync();
+            }
+
+            for (var tag = DeviceTags.PROG1; tag <= DeviceTags.PROG32; tag++)
+            {
+                if (!device.Properties.ContainsKey(tag))
+                {
+                    await device.TryQueryProperty(tag);
+                }
+            }
+
+            for (var tag = DeviceTags.RULE1; tag <= DeviceTags.RULE32; tag++)
+            {
+                if (!device.Properties.ContainsKey(tag))
+                {
+                    await device.TryQueryProperty(tag);
+                }
+            }
+        }
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
@@ -195,10 +242,7 @@ public partial class DevicePage : ContentPage
 
     private void BuildMobile()
     {
-        var stack = new VerticalStackLayout
-        {
-            
-        };
+        var stack = new VerticalStackLayout();
 
         stack.Children.Add(DeviceHeader);
         stack.Children.Add(DeviceStatus);
@@ -207,25 +251,21 @@ public partial class DevicePage : ContentPage
         stack.Children.Add(ProgramList);
 
 
-        PageRoot.Content = stack;        
+        this.Content = new ScrollView { Content = stack };        
     }
 
     private void BuildDesktop()
     {
-        var grid = new Grid
+        var mainGrid = new Grid
         {
             RowDefinitions =
             {
                 new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                new RowDefinition { Height = new GridLength(2, GridUnitType.Star) },
-                new RowDefinition { Height = new GridLength(3, GridUnitType.Star) }
-
             },
             ColumnDefinitions =
             {
                 new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
-                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
             },
             Margin = 10,
             RowSpacing = 10,
@@ -233,13 +273,37 @@ public partial class DevicePage : ContentPage
         };
 
 
-        grid.AddWithSpan(DeviceHeader, 0, 0, columnSpan: 3);
-        grid.AddWithSpan(DeviceStatus, 1, 0, columnSpan: 3);
-        grid.AddWithSpan(PropertyList, 2, 0, columnSpan: 1);
-        grid.AddWithSpan(RuleList, 2, 1, columnSpan: 1);
-        grid.AddWithSpan(ProgramList, 2, 2, columnSpan: 1);
+        var left = new ScrollView
+        {
+            Content = new VerticalStackLayout
+            {
+                Children =
+                {
+                    DeviceHeader,
+                    DeviceStatus,
+                    PropertyList,
 
-        PageRoot.Content = grid;
+                }
+            }
+        };
+
+        mainGrid.AddWithSpan(left, 0, 0);
+
+        var right = new ScrollView
+        {
+            Content = new VerticalStackLayout
+            {
+                Children =
+                {
+                    RuleList,
+                    ProgramList,    
+                }
+            }
+        };
+
+        mainGrid.AddWithSpan(right, 0, 1);
+
+        this.Content = mainGrid;
     }
 
 }

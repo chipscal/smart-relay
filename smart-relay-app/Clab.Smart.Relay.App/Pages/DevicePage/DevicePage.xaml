@@ -4,7 +4,7 @@
              x:Class="Clab.Smart.Relay.App.DevicePage"
              xmlns:app="clr-namespace:Clab.Smart.Relay.App">
 
-    <ScrollView x:Name="PageRoot">
+    <!-- <ScrollView x:Name="PageRoot">
         
-    </ScrollView>
+    </ScrollView> -->
 </ContentPage>

@@ -14,6 +14,8 @@ public partial class PropertyListView : ContentView
         InitializeComponent();
 
         BindingContext = this;
+
+        DeviceProperties = new ObservableCollection<DevicePropertyInfo>();
     }
 
     public static readonly BindableProperty DevicePropertiesProperty =

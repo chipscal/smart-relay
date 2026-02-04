@@ -39,6 +39,7 @@ public class Device(string deviceUID, MQTTClient mqttClient)
     public Dictionary<DeviceTags, DeviceSettableProperty>      Properties      { get; set; } = new Dictionary<DeviceTags, DeviceSettableProperty>();
 
     public event EventHandler OnTelemetryUpdate;
+    public event EventHandler OnPropertyChanged;
 
     private  MQTTClient _mqttClient = mqttClient;
 
@@ -49,6 +50,10 @@ public class Device(string deviceUID, MQTTClient mqttClient)
 
         var propTopic = string.Format(PropValueTopicFormat, DeviceUID, "+");
         await _mqttClient.SubscribeAsync(propTopic, CreateRefreshPropertyHandle);
+
+        //Note: to speed up we register a dummy callback so to avoid to mqtt subscribe and unsubscribe for each command 
+        var ackTopic = string.Format(CmdAckTopicFormat, DeviceUID, "+", "#");
+        await _mqttClient.SubscribeAsync(ackTopic, LogCommandAck);
 
     }
 
@@ -80,6 +85,8 @@ public class Device(string deviceUID, MQTTClient mqttClient)
             toUpsert.Value = Encoding.UTF8.GetString(payload);
             toUpsert.LastUpdate = DateTime.UtcNow;
         }
+
+        OnPropertyChanged(this, EventArgs.Empty);
     }
 
     private async Task RefreshFromTelemetryHandle(string topic, ArraySegment<byte> payload)
@@ -87,6 +94,24 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         RefreshFromTelemetry(payload);
 
         OnTelemetryUpdate(this, EventArgs.Empty);
+    }
+
+    private async Task LogCommandAck(string topic, ArraySegment<byte> payload)
+    {
+        var decoded = Convert.FromBase64String(Encoding.UTF8.GetString(payload));
+            
+        var buffer = new byte[sizeof(uint)];
+        Array.Copy(decoded, 0, buffer, 0, sizeof(uint));
+        if (!BitConverter.IsLittleEndian)
+            Array.Reverse(buffer, 0, sizeof(uint));
+        
+        var recvTs = BitConverter.ToUInt32(buffer);
+
+        bool result = false;
+        if (topic.ToLowerInvariant().EndsWith("/ack"))
+            result = true;        
+        
+        Debug.WriteLine($"Command[{recvTs}] topic: {topic} result: {result}");
     }
 
     public void RefreshFromTelemetry(ArraySegment<byte> payload)
@@ -183,15 +208,6 @@ public class Device(string deviceUID, MQTTClient mqttClient)
                     propToUpsert.Tag = tag;
                     Properties[tag] = propToUpsert;
                 }
-            
-                tag = DeviceTags.LATCH_OVERRIDE1 + k;
-                propToUpsert = Properties.GetValueOrDefault(tag);
-                if (propToUpsert == null)
-                {
-                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                    propToUpsert.Tag = tag;
-                    Properties[tag] = propToUpsert;
-                }
             }
 
         }
@@ -227,15 +243,6 @@ public class Device(string deviceUID, MQTTClient mqttClient)
             {
                 tag = DeviceTags.RELAY_DELAYS1 + k;
                 var propToUpsert = Properties.GetValueOrDefault(tag);
-                if (propToUpsert == null)
-                {
-                    propToUpsert = new DeviceSettableProperty(this, _mqttClient);
-                    propToUpsert.Tag = tag;
-                    Properties[tag] = propToUpsert;
-                }
-
-                tag = DeviceTags.RELAY_OVERRIDE1 + k;
-                propToUpsert = Properties.GetValueOrDefault(tag);
                 if (propToUpsert == null)
                 {
                     propToUpsert = new DeviceSettableProperty(this, _mqttClient);
@@ -418,6 +425,29 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         return await AcknowledgedCommandAsync("refresh", null, cancellationToken);
     }
 
+    public async Task<bool> TryQueryProperty(DeviceTags tag, CancellationToken cancellationToken = default)
+    {
+        DeviceProperty property = null;
+        if (tag.IsSettableProperty())
+        {
+            property = new DeviceSettableProperty(this, _mqttClient)
+            {
+                Tag = tag,
+                LastUpdate = DateTime.UnixEpoch,
+                LastSync = DateTime.UnixEpoch
+            };
+        }
+        else
+        {
+            property = new DeviceProperty(this)
+            {
+                Tag = tag,
+                LastUpdate = DateTime.UnixEpoch,
+            };
+        }
+        
+        return await property.QueryAsync();
+    }
     
     public async Task<bool> AcknowledgedCommandAsync(string command, ArraySegment<byte> payload, CancellationToken cancellationToken = default)
     {
@@ -451,7 +481,7 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         var ackTopic = string.Format(CmdAckTopicFormat, DeviceUID, command, "#");
         await _mqttClient.SubscribeAsync(ackTopic, ackLambda);
 
-        var topic = string.Format(CmdExecTopicFormat, DeviceUID, "restart");
+        var topic = string.Format(CmdExecTopicFormat, DeviceUID, command);
         
         await _mqttClient.EnqueueMessageAsync(topic, GenerateMQTTCommandPayload(ts, payload));
 

@@ -9,9 +9,11 @@
         SelectionMode="None" 
         x:Name="DeviceStatusCollectionView"
         Margin="10" >
+        
         <CollectionView.ItemsLayout>
-            <GridItemsLayout Orientation="Vertical" Span="{OnIdiom Phone=0, Tablet=2, Desktop=2}" />
+                <LinearItemsLayout Orientation="Vertical" />
         </CollectionView.ItemsLayout>
+
         <CollectionView.ItemTemplate>
             <DataTemplate>
                 <Border Padding="10" Margin="5" >

@@ -37,6 +37,8 @@ public partial class DeviceStatusView : ContentView
         InitializeComponent();
 
         BindingContext = this;
+
+        DeviceStatus = new ObservableCollection<DevicePropertyInfo>();
     }
 
 }
