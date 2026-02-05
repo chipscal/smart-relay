@@ -37,6 +37,8 @@ public partial class RuleListView : ContentView
         InitializeComponent();
 
         BindingContext = this;
+
+        DeviceRules = new ObservableCollection<DeviceRuleInfo>();
     }
 
     public static readonly BindableProperty OnAddRuleClickedProperty =

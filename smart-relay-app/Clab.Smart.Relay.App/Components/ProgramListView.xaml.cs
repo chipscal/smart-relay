@@ -13,6 +13,8 @@ public partial class ProgramListView : ContentView
         InitializeComponent();
 
         BindingContext = this;
+
+        DevicePrograms = new ObservableCollection<DeviceProgramInfo>();
     }
 
     public static readonly BindableProperty DeviceProgramsProperty =

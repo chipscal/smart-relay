@@ -828,6 +828,70 @@ public static class DevicePropertyUtils
     {
         return tag switch
         {
+            DeviceTags.RULE1 or
+            DeviceTags.RULE2 or
+            DeviceTags.RULE3 or
+            DeviceTags.RULE4 or
+            DeviceTags.RULE5 or
+            DeviceTags.RULE6 or
+            DeviceTags.RULE7 or
+            DeviceTags.RULE8 or
+            DeviceTags.RULE9 or
+            DeviceTags.RULE10 or
+            DeviceTags.RULE11 or
+            DeviceTags.RULE12 or
+            DeviceTags.RULE13 or
+            DeviceTags.RULE14 or
+            DeviceTags.RULE15 or
+            DeviceTags.RULE16 or
+            DeviceTags.RULE17 or
+            DeviceTags.RULE18 or
+            DeviceTags.RULE19 or
+            DeviceTags.RULE20 or
+            DeviceTags.RULE21 or
+            DeviceTags.RULE22 or
+            DeviceTags.RULE23 or
+            DeviceTags.RULE24 or
+            DeviceTags.RULE25 or
+            DeviceTags.RULE26 or
+            DeviceTags.RULE27 or
+            DeviceTags.RULE28 or
+            DeviceTags.RULE29 or
+            DeviceTags.RULE30 or
+            DeviceTags.RULE31 or
+            DeviceTags.RULE32 or
+            DeviceTags.PROG1 or
+            DeviceTags.PROG2 or
+            DeviceTags.PROG3 or
+            DeviceTags.PROG4 or
+            DeviceTags.PROG5 or
+            DeviceTags.PROG6 or
+            DeviceTags.PROG7 or
+            DeviceTags.PROG8 or
+            DeviceTags.PROG9 or
+            DeviceTags.PROG10 or
+            DeviceTags.PROG11 or
+            DeviceTags.PROG12 or
+            DeviceTags.PROG13 or
+            DeviceTags.PROG14 or
+            DeviceTags.PROG15 or
+            DeviceTags.PROG16 or
+            DeviceTags.PROG17 or
+            DeviceTags.PROG18 or
+            DeviceTags.PROG19 or
+            DeviceTags.PROG20 or
+            DeviceTags.PROG21 or
+            DeviceTags.PROG22 or
+            DeviceTags.PROG23 or
+            DeviceTags.PROG24 or
+            DeviceTags.PROG25 or
+            DeviceTags.PROG26 or
+            DeviceTags.PROG27 or
+            DeviceTags.PROG28 or
+            DeviceTags.PROG29 or
+            DeviceTags.PROG30 or
+            DeviceTags.PROG31 or
+            DeviceTags.PROG32 or
             DeviceTags.PULSE_FILTER1 or
             DeviceTags.PULSE_FILTER2 or
             DeviceTags.PULSE_FILTER3 or
@@ -1133,6 +1197,78 @@ public static class DevicePropertyUtils
             DeviceTags.A_VOLTAGE_INPUT30 or
             DeviceTags.A_VOLTAGE_INPUT31 or
             DeviceTags.A_VOLTAGE_INPUT32 => true,
+            _ => false
+        };
+    }
+
+    public static bool IsControlProperty(this DeviceTags tag)
+    {
+        return tag switch
+        {
+            DeviceTags.RULE1 or
+            DeviceTags.RULE2 or
+            DeviceTags.RULE3 or
+            DeviceTags.RULE4 or
+            DeviceTags.RULE5 or
+            DeviceTags.RULE6 or
+            DeviceTags.RULE7 or
+            DeviceTags.RULE8 or
+            DeviceTags.RULE9 or
+            DeviceTags.RULE10 or
+            DeviceTags.RULE11 or
+            DeviceTags.RULE12 or
+            DeviceTags.RULE13 or
+            DeviceTags.RULE14 or
+            DeviceTags.RULE15 or
+            DeviceTags.RULE16 or
+            DeviceTags.RULE17 or
+            DeviceTags.RULE18 or
+            DeviceTags.RULE19 or
+            DeviceTags.RULE20 or
+            DeviceTags.RULE21 or
+            DeviceTags.RULE22 or
+            DeviceTags.RULE23 or
+            DeviceTags.RULE24 or
+            DeviceTags.RULE25 or
+            DeviceTags.RULE26 or
+            DeviceTags.RULE27 or
+            DeviceTags.RULE28 or
+            DeviceTags.RULE29 or
+            DeviceTags.RULE30 or
+            DeviceTags.RULE31 or
+            DeviceTags.RULE32 or
+            DeviceTags.PROG1 or
+            DeviceTags.PROG2 or
+            DeviceTags.PROG3 or
+            DeviceTags.PROG4 or
+            DeviceTags.PROG5 or
+            DeviceTags.PROG6 or
+            DeviceTags.PROG7 or
+            DeviceTags.PROG8 or
+            DeviceTags.PROG9 or
+            DeviceTags.PROG10 or
+            DeviceTags.PROG11 or
+            DeviceTags.PROG12 or
+            DeviceTags.PROG13 or
+            DeviceTags.PROG14 or
+            DeviceTags.PROG15 or
+            DeviceTags.PROG16 or
+            DeviceTags.PROG17 or
+            DeviceTags.PROG18 or
+            DeviceTags.PROG19 or
+            DeviceTags.PROG20 or
+            DeviceTags.PROG21 or
+            DeviceTags.PROG22 or
+            DeviceTags.PROG23 or
+            DeviceTags.PROG24 or
+            DeviceTags.PROG25 or
+            DeviceTags.PROG26 or
+            DeviceTags.PROG27 or
+            DeviceTags.PROG28 or
+            DeviceTags.PROG29 or
+            DeviceTags.PROG30 or
+            DeviceTags.PROG31 or
+            DeviceTags.PROG32 => true,
             _ => false
         };
     }

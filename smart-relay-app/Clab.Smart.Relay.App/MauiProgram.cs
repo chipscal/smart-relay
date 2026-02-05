@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using MauiIcons.Core;
+using MauiIcons.Material;
+using Microsoft.Extensions.Logging;
 
 namespace Clab.Smart.Relay.App;
 
@@ -13,7 +15,14 @@ public static class MauiProgram
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+			})
+			.UseMauiIconsCore(x =>
+			{
+				x.SetDefaultIconSize(30.0);
+				x.SetDefaultIconAutoScaling(true);
+				x.SetDefaultFontOverride(true);
+			})
+			.UseMaterialMauiIcons();;
 
 #if DEBUG
 		builder.Logging.AddDebug();

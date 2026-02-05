@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="Clab.Smart.Relay.App.PropertyListView">
+             x:Class="Clab.Smart.Relay.App.PropertyListView"
+             xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons">
 
 
     <VerticalStackLayout >
@@ -35,7 +36,7 @@
                 <DataTemplate>
                     <Border Padding="10"
                             Margin="5">
-                        <Grid ColumnDefinitions="3*,4*">
+                        <Grid ColumnDefinitions="0.25*,0.5*, 0.25*">
                             <Label Grid.Column="0"
                                     Text="{Binding Name}"
                                     FontSize="{OnIdiom Phone=17, Tablet=20, Desktop=20}"
@@ -48,6 +49,11 @@
                                     HorizontalOptions="End"
                                     VerticalOptions="Center"
                                     FontAutoScalingEnabled="True"/>
+
+                            <ImageButton Grid.Column="2"
+                                    Source="{mi:Material Icon=Edit}"   
+                                    HorizontalOptions="End"
+                                    HeightRequest="40" WidthRequest="40" CornerRadius="20"/>
                         </Grid>
                     </Border>
                 </DataTemplate>

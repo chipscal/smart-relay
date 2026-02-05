@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using Clab.Smart.Relay.App.Common;
 using Microsoft.Maui.Controls;
@@ -194,11 +195,34 @@ public partial class DevicePage : ContentPage
 
             PropertyList.DeviceProperties.Clear();
             foreach (var prop in device.Properties.Values
+                    .Where(p => !p.Tag.IsControlProperty())
                     .OrderBy(p => p.Tag)
-                    .Select(p => new DevicePropertyInfo { Name = p.Tag.ToString(), Value = p.Value}))
+                    .Select(p => new DevicePropertyInfo { Name = p.Tag.ToString(), Value = ConvertPropertyToHuman(p.Tag, p.Value)}))
             {
                 PropertyList.DeviceProperties.Add(prop);
             }
+
+            RuleList.DeviceRules.Clear();
+            foreach (var prop in device.Properties.Values
+                    .Where(p => p.Tag >= DeviceTags.RULE1 && p.Tag <= DeviceTags.RULE32)
+                    .OrderBy(p => p.Tag)
+                    .Select(p =>
+                    {
+
+                        var deviceRule = new DeviceRule();
+                        deviceRule.ParseFrom(Encoding.UTF8.GetString(Convert.FromBase64String(p.Value)));
+
+                        return new DeviceRuleInfo
+                        {
+                            Index = p.Tag - DeviceTags.RULE1 + 1,
+                            Action = deviceRule.Action.ToString(),
+                            UnaryRules = deviceRule.Rules.Select(r => r.Serialize())
+                        };
+                    }))
+            {
+                RuleList.DeviceRules.Add(prop);
+            }
+
         }
     }
 
@@ -228,17 +252,43 @@ public partial class DevicePage : ContentPage
         }
     }
 
-    protected override async void OnAppearing()
+    /// <summary>
+    /// Converts base64 property to human readable string
+    /// </summary>
+    /// <param name="tag">of the property</param>
+    /// <param name="value">to convert</param>
+    /// <returns>human readable string according to tag and value</returns>
+    /// <remarks>For localization AppState can be accessed here!</remarks>
+    private string ConvertPropertyToHuman(DeviceTags tag, string value)
     {
-        base.OnAppearing();
-        Debug.WriteLine(DeviceUID);
-    }
+        var decodedBuffer = Convert.FromBase64String(value);
 
+        if (tag >= DeviceTags.PULSE_FILTER1 && tag <= DeviceTags.PULSE_FILTER32)
+        {
+            if (decodedBuffer.Length == sizeof(UInt16))
+            {
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
+                if (!BitConverter.IsLittleEndian)
+                    Array.Reverse(decodedBuffer, 0, sizeof(UInt16));
 
+                var millis = BitConverter.ToUInt16(decodedBuffer, 0);
+
+                return $"{millis} ms";
+            }
+        }
+
+        if (tag >= DeviceTags.RELAY_DELAYS1 && tag <= DeviceTags.RELAY_DELAYS32)
+        {
+            if (decodedBuffer.Length == sizeof(UInt16))
+            {
+                int start = decodedBuffer[0];
+                int stop = decodedBuffer[1];
+
+                return $"<start: {start} s, stop: {stop} s>";
+            }
+        }
+
+        return Encoding.UTF8.GetString(decodedBuffer);
     }
 
     private void OnPageSizeChanged(object sender, EventArgs e)
