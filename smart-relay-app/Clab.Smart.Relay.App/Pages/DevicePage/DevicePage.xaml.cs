@@ -41,13 +41,15 @@ public partial class DevicePage : ContentPage
         }
     }
 
-    private readonly DeviceHeaderView DeviceHeader;
-    private readonly DeviceStatusView DeviceStatus;
-    private readonly PropertyListView PropertyList;
-    private readonly RuleListView     RuleList;
-    private readonly ProgramListView  ProgramList;
+    private DeviceHeaderView DeviceHeader;
+    private DeviceStatusView DeviceStatus;
+    private PropertyListView PropertyList;
+    private RuleListView     RuleList;
+    private ProgramListView  ProgramList;
 
 	private AppState		AppState { get; }
+
+    private double? _lastWidth = null;
 
     public DevicePage(AppState appState)
     {
@@ -209,16 +211,15 @@ public partial class DevicePage : ContentPage
                 await prop.QueryAsync();
             }
 
-            for (var tag = DeviceTags.PROG1; tag <= DeviceTags.PROG32; tag++)
+            for (int k = 0; k < 32; k++)
             {
+                var tag = DeviceTags.PROG1 + k;
                 if (!device.Properties.ContainsKey(tag))
                 {
                     await device.TryQueryProperty(tag);
                 }
-            }
-
-            for (var tag = DeviceTags.RULE1; tag <= DeviceTags.RULE32; tag++)
-            {
+                
+                tag = DeviceTags.RULE1 + k;
                 if (!device.Properties.ContainsKey(tag))
                 {
                     await device.TryQueryProperty(tag);
@@ -238,6 +239,36 @@ public partial class DevicePage : ContentPage
     {
         base.OnDisappearing();
 
+    }
+
+    private void OnPageSizeChanged(object sender, EventArgs e)
+    {
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (_lastWidth == null || 
+            (_lastWidth >= 600 && Width < 600) ||
+            (_lastWidth < 600 && Width >= 600))
+            {
+                _lastWidth = Width;
+
+                DeviceHeader = new DeviceHeaderView();
+                DeviceStatus = new DeviceStatusView();
+                PropertyList = new PropertyListView();
+                RuleList = new RuleListView();
+                ProgramList = new ProgramListView();
+
+                if (DeviceInfo.Current.Idiom == DeviceIdiom.Phone)
+                    BuildMobile();
+                else if (Width < 600)
+                    BuildMobile();
+                else
+                    BuildDesktop();
+
+                UpdateDeviceStatusAndProperties();
+            }
+
+        });
     }
 
     private void BuildMobile()
@@ -283,7 +314,8 @@ public partial class DevicePage : ContentPage
                     DeviceStatus,
                     PropertyList,
 
-                }
+                },
+                Margin = 10
             }
         };
 
@@ -297,7 +329,8 @@ public partial class DevicePage : ContentPage
                 {
                     RuleList,
                     ProgramList,    
-                }
+                },
+                Margin = 10
             }
         };
 

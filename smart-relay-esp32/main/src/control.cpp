@@ -179,6 +179,27 @@ namespace clab::plugins {
             clab::iot_services::sprint_uint32_binary((char *)buffer, overrides.relay_mask);
             ESP_LOGI(TAG, "Relay override: %s", buffer);
         }
+        else {
+            memcpy(prop_value_buffer, &(overrides.latch_mask), sizeof(uint32_t));
+            memcpy(prop_value_buffer + sizeof(uint32_t), &(overrides.latch_mask), sizeof(uint32_t));
+            
+            size_t encoded_size;
+
+            if (mbedtls_base64_encode((unsigned char *)buffer, sizeof(buffer), 
+                    &encoded_size, (const unsigned char *)prop_value_buffer, 2 * sizeof(uint32_t)) < 0) {
+                ESP_LOGE(TAG, "Unable to byte64 encode overrides, too big!");
+                return ESP_FAIL;
+            }
+
+            ESP_LOGI(TAG, "Saving <over>: %.*s, (%d bytes)", encoded_size, (unsigned char *)buffer, encoded_size);
+            esp_err_t result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                    "over", (char *)buffer, encoded_size); 
+            if (result != ESP_OK) {
+                ESP_LOGE(TAG, "Unable to save property!");
+                return ESP_FAIL;
+            }
+            
+        }
 
         control_task_loop_cnt = 0;
         auto task_result = xTaskCreate(control_task, "control", 4096, NULL, tskIDLE_PRIORITY, &control_task_handle); 

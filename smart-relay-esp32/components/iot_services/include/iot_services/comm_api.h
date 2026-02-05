@@ -41,14 +41,30 @@ namespace clab::iot_services
             memset(this, 0, sizeof(port_conf_t));
         }
 
+        constexpr size_t buffered_size() {
+            return sizeof(port_conf_t);
+        }
+
         esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
 
-            if (buffer_size < 2 * sizeof(uint8_t)) {
+            if (buffer_size < buffered_size()) {
                 return ESP_ERR_INVALID_SIZE;
             }
             
             init_d = buffer[0];
             stop_d = buffer[1];
+
+            return ESP_OK;
+        }
+
+        esp_err_t to_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < buffered_size()) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            buffer[0] = init_d;
+            buffer[1] = stop_d;
 
             return ESP_OK;
         }
@@ -72,7 +88,7 @@ namespace clab::iot_services
 
         esp_err_t from_buffer(uint8_t *buffer, size_t buffer_size) {
 
-            if (buffer_size < sizeof(latch_conf) + sizeof(relay_conf)) {
+            if (buffer_size < size()) {
                 return ESP_ERR_INVALID_SIZE;
             }
             
@@ -82,6 +98,27 @@ namespace clab::iot_services
             offset += Nl * sizeof(port_conf_t);
             
             memcpy(relay_conf, buffer + offset, Nr * sizeof(port_conf_t));
+            offset += Nr * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+
+        constexpr size_t buffered_size() {
+            return (Nl + Nr) * sizeof(port_conf_t);
+        }
+
+        esp_err_t to_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(latch_conf) + sizeof(relay_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+
+            memcpy(buffer + offset, latch_conf, Nl * sizeof(port_conf_t));
+            offset += Nl * sizeof(port_conf_t);
+            
+            memcpy(buffer + offset, relay_conf, Nr * sizeof(port_conf_t));
             offset += Nr * sizeof(port_conf_t);
 
             return ESP_OK;
@@ -136,6 +173,24 @@ namespace clab::iot_services
             return ESP_OK;
         }
 
+        constexpr size_t buffered_size() {
+            return Nr * sizeof(port_conf_t);
+        }
+
+        esp_err_t to_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(latch_conf) + sizeof(relay_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+
+            memcpy(buffer + offset, relay_conf, Nr * sizeof(port_conf_t));
+            offset += Nr * sizeof(port_conf_t);
+
+            return ESP_OK;
+        }
+
         esp_err_t set_latch_port(size_t idx, port_conf_t &port_conf) {
             return ESP_ERR_INVALID_ARG;
         }
@@ -174,6 +229,24 @@ namespace clab::iot_services
             memcpy(latch_conf, buffer + offset, Nl * sizeof(port_conf_t));
             offset += Nl * sizeof(port_conf_t);
 
+            return ESP_OK;
+        }
+
+        constexpr size_t buffered_size() {
+            return Nl * sizeof(port_conf_t);
+        }
+
+        esp_err_t to_buffer(uint8_t *buffer, size_t buffer_size) {
+
+            if (buffer_size < sizeof(latch_conf) + sizeof(relay_conf)) {
+                return ESP_ERR_INVALID_SIZE;
+            }
+            
+            int offset = 0;
+
+            memcpy(buffer + offset, latch_conf, Nl * sizeof(port_conf_t));
+            offset += Nl * sizeof(port_conf_t);
+            
             return ESP_OK;
         }
 

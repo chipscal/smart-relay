@@ -722,6 +722,24 @@ namespace clab::iot_services {
                         
                     }
                 }
+                else {
+                    size_t encoded_size;
+
+                    if (mbedtls_base64_encode((unsigned char *)buffer, sizeof(buffer), 
+                            &encoded_size, (const unsigned char *)&(pulse_disable[key]), sizeof(uint16_t)) < 0) {
+                        ESP_LOGE(TAG, "Unable to byte64 encode overrides, too big!");
+                        return ESP_FAIL;
+                    }
+
+                    ESP_LOGI(TAG, "Saving <%s>: %.*s, (%d bytes)", key_buf, encoded_size, (unsigned char *)buffer, encoded_size);
+                    esp_err_t result = clab::iot_services::storage_db_set(CONFIG_IOT_IO_STORAGE_NAMESPACE, 
+                            key_buf, (char *)buffer, encoded_size); 
+                    if (result != ESP_OK) {
+                        ESP_LOGE(TAG, "Unable to save property!");
+                        return ESP_FAIL;
+                    }
+                }
+
                 cnt++;
             }
 

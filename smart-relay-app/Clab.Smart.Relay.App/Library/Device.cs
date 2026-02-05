@@ -53,7 +53,7 @@ public class Device(string deviceUID, MQTTClient mqttClient)
 
         //Note: to speed up we register a dummy callback so to avoid to mqtt subscribe and unsubscribe for each command 
         var ackTopic = string.Format(CmdAckTopicFormat, DeviceUID, "+", "#");
-        await _mqttClient.SubscribeAsync(ackTopic, LogCommandAck);
+        await _mqttClient.SubscribeAsync(ackTopic, LogCommandFailure);
 
     }
 
@@ -96,7 +96,7 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         OnTelemetryUpdate(this, EventArgs.Empty);
     }
 
-    private async Task LogCommandAck(string topic, ArraySegment<byte> payload)
+    private async Task LogCommandFailure(string topic, ArraySegment<byte> payload)
     {
         var decoded = Convert.FromBase64String(Encoding.UTF8.GetString(payload));
             
@@ -107,11 +107,10 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         
         var recvTs = BitConverter.ToUInt32(buffer);
 
-        bool result = false;
-        if (topic.ToLowerInvariant().EndsWith("/ack"))
-            result = true;        
-        
-        Debug.WriteLine($"Command[{recvTs}] topic: {topic} result: {result}");
+        if (topic.ToLowerInvariant().EndsWith("/nack"))
+        {
+            Debug.WriteLine($"Command[{recvTs}] topic: {topic} result: fail");
+        }
     }
 
     public void RefreshFromTelemetry(ArraySegment<byte> payload)
@@ -402,6 +401,19 @@ public class Device(string deviceUID, MQTTClient mqttClient)
         }
 
         ModelName = Encoding.UTF8.GetString(decoded, offset, decoded.Length - offset);
+
+        // Control properties
+        lock (Properties)
+        {
+            var tag = DeviceTags.OVERRIDE;
+            var propToUpsert = Properties.GetValueOrDefault(tag);
+            if (propToUpsert == null)
+            {
+                propToUpsert = new DeviceSettableProperty(this, _mqttClient);
+                propToUpsert.Tag = tag;
+                Properties[tag] = propToUpsert;
+            }
+        }
     }
 
     public async Task RestartAsync()
